@@ -1,0 +1,5 @@
+
+ANT = ant
+
+all:
+	@$(ANT)
