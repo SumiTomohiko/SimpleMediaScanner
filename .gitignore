@@ -1,5 +1,6 @@
 .settings
 bin
 gen
+jp.gr.java_conf.neko_daisuki.contentprovidermaintainer
 local.properties
 project.properties
