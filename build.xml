@@ -88,5 +88,7 @@
     -->
     <!-- version-tag: 1 -->
     <import file="${sdk.dir}/tools/ant/build.xml" />
-
 </project>
+<!--
+vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
+-->
