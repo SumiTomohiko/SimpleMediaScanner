@@ -14,6 +14,17 @@
     <string name="add_button">Add a directory...</string>
     <string name="run_all_button">Run all</string>
     <string name="menu_settings">Settings</string>
+    <string name="delete_dialog_title">
+        You are about to delete a directory.
+    </string>
+    <string name="delete_confirm_format">
+        You ordered me to delete the following directory.\n\
+        \n\
+        Path: %1$s\n\
+        \n\
+        If you are okey, please push \&quot;%2$s\&quot;. If it is wrong, push
+        \&quot;%3$s\&quot;.
+    </string>
 
     <!-- EditActivity -->
     <string name="directory_label">Directory path</string>

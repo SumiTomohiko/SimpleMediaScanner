@@ -7,9 +7,12 @@ import java.util.Deque;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -31,6 +34,25 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
+    private class DeleteDialogOnClickListener implements DialogInterface.OnClickListener {
+
+        private int mPosition;
+
+        public DeleteDialogOnClickListener(int position) {
+            mPosition = position;
+        }
+
+        public void onClick(DialogInterface _, int __) {
+            Directory directory = mDirectories[mPosition];
+            SQLiteDatabase db = mDatabase.getWritableDatabase();
+            String where = String.format("%s=?", DatabaseHelper.Columns._ID);
+            String[] args = new String[] { Long.toString(directory.id) };
+            db.delete(DatabaseHelper.TABLE_NAME, where, args);
+
+            updateDirectories();
+        }
+    }
+
     private class DirectoryAdapter extends ArrayAdapter<Directory> {
 
         private abstract class ListButtonOnClickListener implements View.OnClickListener {
@@ -51,7 +73,7 @@ public class MainActivity extends Activity {
             }
 
             public void onClick(View _) {
-                //showConfirmDialogToDelete(mPosition);
+                showConfirmDialog(mPosition);
             }
         }
 
@@ -376,6 +398,23 @@ public class MainActivity extends Activity {
     private void updateDirectories() {
         mDirectories = queryDirectories();
         updateList();
+    }
+
+    private void showConfirmDialog(int position) {
+        Directory directory = mDirectories[position];
+        Resources res = getResources();
+        String fmt = res.getString(R.string.delete_confirm_format);
+        String positive = res.getString(R.string.positive);
+        String negative = res.getString(R.string.negative);
+        String msg = String.format(fmt, directory.path, positive, negative);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.delete_dialog_title);
+        builder.setMessage(msg);
+        builder.setPositiveButton(R.string.positive, new DeleteDialogOnClickListener(position));
+        builder.setNegativeButton(R.string.negative, null);
+
+        builder.create().show();
     }
 }
 
