@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+    <import file="svg2png.xml"/>
+    <macrodef name="svg2icon">
+        <attribute name="dest"/>
+        <attribute name="size"/>
+        <sequential>
+            <svg2png dest="@{dest}" src="ic_launcher.svg" size="@{size}"/>
+        </sequential>
+    </macrodef>
+    <macrodef name="svg2drawable">
+        <attribute name="dpi"/>
+        <attribute name="size"/>
+        <sequential>
+            <svg2icon
+                dest="res/drawable-@{dpi}dpi/ic_launcher.png"
+                size="@{size}"/>
+        </sequential>
+    </macrodef>
+
+    <target name="icon">
+        <svg2drawable dpi="m" size="48"/>
+        <svg2drawable dpi="h" size="72"/>
+        <svg2drawable dpi="xh" size="96"/>
+        <svg2drawable dpi="xxh" size="144"/>
+        <svg2icon dest="ic_launcher-web.png" size="512"/>
+    </target>
+</project>
+<!--
+vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
+-->

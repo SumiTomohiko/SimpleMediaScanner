@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+    <macrodef name="svg2png">
+        <attribute name="dest"/>
+        <attribute name="src"/>
+        <attribute name="size"/>
+        <sequential>
+            <local name="svg2png.dir"/>
+            <dirname property="svg2png.dir" file="@{dest}"/>
+            <mkdir dir="${svg2png.dir}"/>
+            <exec executable="inkscape">
+                <arg value="--export-png"/>
+                <arg value="@{dest}"/>
+                <arg value="--export-height=@{size}"/>
+                <arg value="--export-background-opacity=0.0"/>
+                <arg value="@{src}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+</project>
+<!--
+vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
+-->
