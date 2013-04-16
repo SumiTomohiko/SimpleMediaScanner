@@ -5,6 +5,7 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
     <ListView
+        android:id="@+id/directory_list"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_weight="1"/>
@@ -18,11 +19,11 @@
             android:layout_weight="1"
             android:text="@string/add_button"/>
         <Button
-            android:id="@+id/run_button"
+            android:id="@+id/run_all_button"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/run_button"/>
+            android:text="@string/run_all_button"/>
     </LinearLayout>
 </LinearLayout>
 <!--
