@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Directory implements Serializable {
 
     public long id;
-    public String path = "";
+    public String path = "/";
 }
 
 /**
