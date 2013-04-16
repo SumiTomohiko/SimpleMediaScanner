@@ -1,17 +1,14 @@
-package jp.gr.java_conf.neko_daisuki.contentprovidermaintainer;
+package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import android.app.Activity;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.media.MediaMetadataRetriever;
+import android.media.MediaScannerConnection.MediaScannerConnectionClient;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -19,25 +16,71 @@ import android.widget.Button;
 
 public class MainActivity extends Activity {
 
-    private static class Audio {
+    private class MediaScannerClient implements MediaScannerConnectionClient {
 
-        public String data;
-        public String duration;
-        public String mime_type;
+        private Deque<File> mFiles = new ArrayDeque<File>();
 
-        public String toString() {
-            return String.format("audio: data=%s, duration=%s, mime_type=%s", data, duration, mime_type);
+        public void onMediaScannerConnected() {
+            Log.i(LOG_TAG, "Connected to the service.");
+            pushAll(mDirectories);
+            scanNext();
+        }
+
+        public void onScanCompleted(String path, Uri uri) {
+            Log.i(LOG_TAG, String.format("Scanning %s was completed.", path));
+            scanNext();
+        }
+
+        private void pushAll(String[] directories) {
+            int len = directories.length;
+            File[] files = new File[len];
+            for (int i = 0; i < len; i++) {
+                files[i] = new File(mDirectories[i]);
+            }
+            pushAll(files);
+        }
+
+        private void pushAll(File[] files) {
+            for (File file: files) {
+                String fmt = "Pushed %s.";
+                Log.i(LOG_TAG, String.format(fmt, file.getAbsolutePath()));
+
+                mFiles.push(file);
+            }
+        }
+
+        private void scanNext() {
+            File file = null;
+            while (!mFiles.isEmpty() && ((file = mFiles.pop()).isDirectory())) {
+                String fmt = "Directory found: %s";
+                Log.i(LOG_TAG, String.format(fmt, file.getAbsolutePath()));
+
+                pushAll(file.listFiles());
+            }
+            if (file == null) {
+                mConnection.disconnect();
+                Log.i(LOG_TAG, "Scanning ended.");
+                return;
+            }
+            String path = file.getAbsolutePath();
+            Log.i(LOG_TAG, String.format("File found: %s", path));
+            mConnection.scanFile(path, null);
         }
     }
 
-    private class RunButtonOnClickListener implements View.OnClickListener {
+    private class RunAllButtonOnClickListener implements View.OnClickListener {
 
-        public void onClick(View view) {
-            updateContentProvider();
+        public void onClick(View _) {
+            startScanning();
         }
     }
 
-    private static final String LOG_TAG = "contentprovidermaintainer";
+    private static final String LOG_TAG = "simplemediascanner";
+
+    private String[] mDirectories = {
+        "/mnt/sdcard/radio",
+        "/mnt/sdcard/music" };
+    private MediaScannerConnection mConnection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +88,10 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         Button runButton = (Button)findViewById(R.id.run_button);
-        runButton.setOnClickListener(new RunButtonOnClickListener());
+        runButton.setOnClickListener(new RunAllButtonOnClickListener());
+
+        MediaScannerClient client = new MediaScannerClient();
+        mConnection = new MediaScannerConnection(this, client);
     }
 
     @Override
@@ -55,72 +101,10 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    private List<Audio> retrieveAudio(String path) {
-        List<Audio> list = new ArrayList<Audio>();
+    private void startScanning() {
+        Log.i(LOG_TAG, "Scanning started.");
 
-        MediaMetadataRetriever data = new MediaMetadataRetriever();
-        try {
-            Log.i(LOG_TAG, String.format("Retrieving %s.", path));
-
-            data.setDataSource(path);
-            Audio audio = new Audio();
-            audio.data = path;
-            audio.duration = data.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            audio.mime_type = data.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
-            list.add(audio);
-        }
-        catch (RuntimeException _) {
-            Log.i(LOG_TAG, String.format("%s seems not audio. Ignored.", path));
-        }
-        finally {
-            data.release();
-        }
-
-        return list;
-    }
-
-    private List<Audio> listAudio(String directory) {
-        List<Audio> list = new ArrayList<Audio>();
-        for (File file: new File(directory).listFiles()) {
-            list.addAll(retrieveAudio(file.getAbsolutePath()));
-        }
-
-        return list;
-    }
-
-    private void insertRecord(Audio audio) {
-        Uri uri = MediaStore.Audio.Media.getContentUriForPath(audio.data);
-        ContentResolver resolver = getContentResolver();
-        String[] columns = new String[] { "_id" };
-        String selection = String.format("%s=?", MediaStore.Audio.AudioColumns.DATA);
-        String[] args = new String[] { audio.data };
-        Cursor c = resolver.query(uri, columns, selection, args, null);
-        try {
-            if (0 < c.getCount()) {
-                return;
-            }
-        }
-        finally {
-            c.close();
-        }
-
-        Log.i(LOG_TAG, String.format("Inserting audio of %s", audio));
-
-        ContentValues row = new ContentValues();
-        row.put(MediaStore.Audio.AudioColumns.DATA, audio.data);
-        row.put(MediaStore.Audio.AudioColumns.DURATION, audio.duration);
-        row.put(MediaStore.Audio.AudioColumns.MIME_TYPE, audio.mime_type);
-        resolver.insert(uri, row);
-    }
-
-    private void updateContentProvider() {
-        Log.i(LOG_TAG, "Updating the content provider started.");
-
-        for (Audio audio: listAudio("/mnt/sdcard/radio")) {
-            insertRecord(audio);
-        }
-
-        Log.i(LOG_TAG, "Updating ended.");
+        mConnection.connect();
     }
 }
 
