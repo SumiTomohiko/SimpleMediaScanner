@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Content Provider Maintainer</string>
+    <string name="app_name">Simple Media Scanner</string>
     <string name="menu_settings">Settings</string>
     <string name="run_button">Run...</string>
     <string name="add_button">Add directory...</string>
