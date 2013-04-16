@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="jp.gr.java_conf.neko_daisuki.simplemediascanner"
     android:versionCode="1"
-    android:versionName="1.0.0dev1">
+    android:versionName="1.0.0alpha1">
     <uses-sdk
         android:minSdkVersion="1"
         android:targetSdkVersion="13"/>
