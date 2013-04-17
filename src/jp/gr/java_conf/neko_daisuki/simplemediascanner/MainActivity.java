@@ -3,8 +3,9 @@ package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -86,9 +87,9 @@ public class MainActivity extends Activity {
             public void onClick(View _) {
                 Directory directory = mDirectories[mPosition];
 
-                // TODO
                 String fmt = "Started scanning for %s.";
                 Log.i(LOG_TAG, String.format(fmt, directory.path));
+                mClient.pushDirectories(new Directory[] { directory });
                 mConnection.connect();
             }
         }
@@ -201,12 +202,11 @@ public class MainActivity extends Activity {
 
     private class MediaScannerClient implements MediaScannerConnectionClient {
 
-        // TODO: A queue is better.
-        private Deque<File> mFiles = new ArrayDeque<File>();
+        private Queue<File> mFiles = new LinkedList<File>();
 
         public void onMediaScannerConnected() {
             Log.i(LOG_TAG, "Connected to the service.");
-            pushAll(mDirectories);
+            pushDirectories(mDirectories);
             scanNext();
         }
 
@@ -215,31 +215,31 @@ public class MainActivity extends Activity {
             scanNext();
         }
 
-        private void pushAll(Directory[] directories) {
+        public void pushDirectories(Directory[] directories) {
             int len = directories.length;
             File[] files = new File[len];
             for (int i = 0; i < len; i++) {
                 files[i] = new File(directories[i].path);
             }
-            pushAll(files);
+            pushFiles(files);
         }
 
-        private void pushAll(File[] files) {
+        private void pushFiles(File[] files) {
             for (File file: files) {
                 String fmt = "Pushed %s.";
                 Log.i(LOG_TAG, String.format(fmt, file.getAbsolutePath()));
 
-                mFiles.push(file);
+                mFiles.offer(file);
             }
         }
 
         private void scanNext() {
-            File file = null;
-            while (!mFiles.isEmpty() && ((file = mFiles.pop()).isDirectory())) {
+            File file;
+            while (((file = mFiles.poll()) != null) && file.isDirectory()) {
                 String fmt = "Directory found: %s";
                 Log.i(LOG_TAG, String.format(fmt, file.getAbsolutePath()));
 
-                pushAll(file.listFiles());
+                pushFiles(file.listFiles());
             }
             if (file == null) {
                 mConnection.disconnect();
@@ -263,6 +263,7 @@ public class MainActivity extends Activity {
 
         public void onClick(View _) {
             Log.i(LOG_TAG, "Started scanning all directories.");
+            mClient.pushDirectories(mDirectories);
             mConnection.connect();
         }
     }
@@ -302,6 +303,7 @@ public class MainActivity extends Activity {
 
     private ListView mDirectoryList;
 
+    private MediaScannerClient mClient;
     private MediaScannerConnection mConnection;
     private SQLiteOpenHelper mDatabase;
     private SparseArray<RequestProcedure> mRequestProcedures;
@@ -317,8 +319,8 @@ public class MainActivity extends Activity {
         Button addButton = (Button)findViewById(R.id.add_button);
         addButton.setOnClickListener(new AddButtonOnClickListener());
 
-        MediaScannerClient client = new MediaScannerClient();
-        mConnection = new MediaScannerConnection(this, client);
+        mClient = new MediaScannerClient();
+        mConnection = new MediaScannerConnection(this, mClient);
         mDatabase = new DatabaseHelper(this);
         mRequestProcedures = new SparseArray<RequestProcedure>();
         mRequestProcedures.put(RequestCode.ADD, new AddRequestProcedure());
