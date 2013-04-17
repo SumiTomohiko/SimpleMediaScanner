@@ -1,4 +1,5 @@
 .settings
+ant.properties
 bin
 gen
 ic_launcher-web.png
