@@ -207,7 +207,6 @@ public class MainActivity extends Activity {
 
         public void onMediaScannerConnected() {
             Log.i(LOG_TAG, "Connected to the service.");
-            pushDirectories(mDirectories);
             scanNext();
         }
 
