@@ -21,6 +21,7 @@ import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.BaseColumns;
 import android.util.Log;
 import android.util.SparseArray;
@@ -33,6 +34,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -203,6 +205,20 @@ public class MainActivity extends Activity {
 
     private class MediaScannerClient implements MediaScannerConnectionClient {
 
+        private class ShowToast implements Runnable {
+
+            private String mMessage;
+
+            public ShowToast(String message) {
+                mMessage = message;
+            }
+
+            public void run() {
+                String s = String.format("Simple Media Scanner: %s", mMessage);
+                Toast.makeText(MainActivity.this, s, Toast.LENGTH_LONG).show();
+            }
+        }
+
         private Queue<File> mFiles = new LinkedList<File>();
 
         public void onMediaScannerConnected() {
@@ -243,12 +259,18 @@ public class MainActivity extends Activity {
             }
             if (file == null) {
                 mConnection.disconnect();
-                Log.i(LOG_TAG, "Scanning ended.");
+                String msg = "Scanning ended.";
+                Log.i(LOG_TAG, msg);
+                requestToast(msg);
                 return;
             }
             String path = file.getAbsolutePath();
             Log.i(LOG_TAG, String.format("File found: %s", path));
             mConnection.scanFile(path, null);
+        }
+
+        private void requestToast(String message) {
+            mHandler.post(new ShowToast(message));
         }
     }
 
@@ -307,6 +329,7 @@ public class MainActivity extends Activity {
     private MediaScannerConnection mConnection;
     private SQLiteOpenHelper mDatabase;
     private SparseArray<RequestProcedure> mRequestProcedures;
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -325,6 +348,7 @@ public class MainActivity extends Activity {
         mRequestProcedures = new SparseArray<RequestProcedure>();
         mRequestProcedures.put(RequestCode.ADD, new AddRequestProcedure());
         mRequestProcedures.put(RequestCode.EDIT, new EditRequestProcedure());
+        mHandler = new Handler();
 
         updateDirectories();
     }
