@@ -331,6 +331,19 @@ public class MainActivity extends Activity {
     private Handler mHandler;
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.activity_main, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Intent i = new Intent(this, AboutActivity.class);
+        this.startActivity(i);
+        return true;
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -350,19 +363,6 @@ public class MainActivity extends Activity {
         mHandler = new Handler();
 
         updateDirectories();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.activity_main, menu);
-        return true;
-    }
-
-    public boolean onOptionsItemSelected(MenuItem item) {
-        Intent i = new Intent(this, AboutActivity.class);
-        this.startActivity(i);
-        return true;
     }
 
     @Override
