@@ -1,6 +1,9 @@
 package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,6 +23,7 @@ import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.provider.BaseColumns;
 import android.util.Log;
@@ -34,6 +38,8 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 public class MainActivity extends Activity {
 
@@ -318,7 +324,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private static final String LOG_TAG = "simplemediascanner";
+    private static final String LOG_TAG = "activity";
 
     private Directory[] mDirectories;
 
@@ -366,6 +372,16 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+        File directory = getApplicationDirectory();
+        if (!directory.exists()) {
+            importOldSettings();
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode != RESULT_OK) {
             return;
@@ -373,6 +389,41 @@ public class MainActivity extends Activity {
         String key = EditActivity.EXTRA_KEY_DIRECTORY;
         Directory directory = (Directory)data.getSerializableExtra(key);
         mRequestProcedures.get(requestCode).run(directory);
+    }
+
+    private void showError(String msg) {
+        Log.e(LOG_TAG, msg);
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    }
+
+    private void showException(String msg, Throwable e) {
+        e.printStackTrace();
+        String s = String.format("%s: %s", msg, e.getMessage());
+        Toast.makeText(this, String.format(s), Toast.LENGTH_LONG).show();
+    }
+
+    private void importOldSettings() {
+        File appDir = getApplicationDirectory();
+        if (!appDir.mkdir()) {
+            String fmt = "Cannot create directory: %s";
+            showError(String.format(fmt, appDir.getAbsolutePath()));
+            return;
+        }
+
+        Directory[] directories = queryDirectories();
+
+        try {
+            Writer writer = new FileWriter(getDataFile());
+            try {
+                new Gson().toJson(directories, writer);
+            }
+            finally {
+                writer.close();
+            }
+        }
+        catch (IOException e) {
+            showException("Cannot write json", e);
+        }
     }
 
     private Directory[] queryDirectories() {
@@ -446,6 +497,16 @@ public class MainActivity extends Activity {
         builder.setNegativeButton(R.string.negative, null);
 
         builder.create().show();
+    }
+
+    private File getDataFile() {
+        String fmt = "%s/data.json";
+        return new File(String.format(fmt, getApplicationDirectory()));
+    }
+
+    private File getApplicationDirectory() {
+        String directory = Environment.getExternalStorageDirectory().getAbsolutePath();
+        return new File(String.format("%s/.simple-media-scanner", directory));
     }
 }
 
