@@ -1,7 +1,6 @@
 package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
 import java.io.File;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,8 +16,8 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
