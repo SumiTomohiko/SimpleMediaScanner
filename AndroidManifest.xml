@@ -5,7 +5,7 @@
     android:versionName="2.0.0beta1">
     <uses-sdk
         android:minSdkVersion="1"
-        android:targetSdkVersion="13"/>
+        android:targetSdkVersion="19"/>
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
