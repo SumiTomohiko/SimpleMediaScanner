@@ -4,15 +4,15 @@
     <string name="app_name">Simple Media Scanner</string>
 
     <!-- Utility strings -->
-    <string name="positive">Okey</string>
+    <string name="positive">Okay</string>
     <string name="negative">Cancel</string>
 
     <!-- MainActivity -->
-    <string name="menu_about">About...</string>
+    <string name="menu_about">About&#8230;</string>
     <string name="run_button">Run</string>
-    <string name="edit_button">Edit...</string>
+    <string name="edit_button">Edit&#8230;</string>
     <string name="delete_button">Delete</string>
-    <string name="add_button">Add a directory...</string>
+    <string name="add_button">Add a directory&#8230;</string>
     <string name="run_all_button">Run all</string>
     <string name="delete_dialog_title">
         You are about to delete a directory.
@@ -22,7 +22,7 @@
         \n\
         Path: %1$s\n\
         \n\
-        If you are okey, please push \&quot;%2$s\&quot;. If it is wrong, push
+        If you are okay, please push \&quot;%2$s\&quot;. If it is wrong, push
         \&quot;%3$s\&quot;.
     </string>
 
