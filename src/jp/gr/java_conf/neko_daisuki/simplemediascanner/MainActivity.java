@@ -3,8 +3,6 @@ package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -13,11 +11,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
-import android.provider.BaseColumns;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -220,40 +214,6 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    private static class DatabaseHelper extends SQLiteOpenHelper {
-
-        public interface Columns extends BaseColumns {
-
-            public static final String PATH = "path";
-        }
-
-        public static final String TABLE_NAME = "directories";
-
-        private static final String DATABASE_NAME = "directories.db";
-        private static final int DATABASE_VERSION = 1;
-
-        public DatabaseHelper(Context ctx) {
-            super(ctx, DATABASE_NAME, null, DATABASE_VERSION);
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            String fmt = "create table %s (%s integer primary key autoincrement"
-                + ", %s text not null);";
-            String sql = String.format(
-                    fmt,
-                    TABLE_NAME,
-                    Columns._ID, Columns.PATH);
-            db.execSQL(sql);
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            db.execSQL(String.format("drop table if exists %s", TABLE_NAME));
-            onCreate(db);
-        }
-    }
-
     private class AddButtonOnClickListener implements View.OnClickListener {
 
         @Override
@@ -283,9 +243,6 @@ public class MainActivity extends FragmentActivity {
     // views
     private Adapter mAdapter;
 
-    // helpers
-    private SQLiteOpenHelper mOldDatabase;
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -312,8 +269,6 @@ public class MainActivity extends FragmentActivity {
         runAllButton.setOnClickListener(new RunAllButtonOnClickListener());
         View addButton = findViewById(R.id.add_button);
         addButton.setOnClickListener(new AddButtonOnClickListener());
-
-        mOldDatabase = new DatabaseHelper(this);
     }
 
     @Override
@@ -345,47 +300,7 @@ public class MainActivity extends FragmentActivity {
             showError(String.format("Cannot create directory: %s", directory));
             return;
         }
-        importOldDatabase();
-    }
-
-    private void importOldDatabase() {
-        Database database = new Database();
-        database.initializeEmptyDatabase();
-
-        List<String> directories = queryDirectories();
-        for (String path: directories) {
-            database.addTask(path);
-        }
-        Util.writeDatabase(this, database);
-    }
-
-    private List<String> queryDirectories() {
-        List<String> directories = new LinkedList<String>();
-
-        try {
-            SQLiteDatabase db = mOldDatabase.getReadableDatabase();
-            Cursor cursor = db.query(
-                    DatabaseHelper.TABLE_NAME,
-                    new String[] { DatabaseHelper.Columns.PATH },
-                    null,   // selection
-                    null,   // selection args
-                    null,   // group by
-                    null,   // having
-                    null);  // order by
-            try {
-                while (cursor.moveToNext()) {
-                    directories.add(cursor.getString(0));
-                }
-            }
-            finally {
-                cursor.close();
-            }
-        }
-        finally {
-            mOldDatabase.close();
-        }
-
-        return directories;
+        OldDatabase.importOldDatabase(this);
     }
 
     private OnPositiveListener getPositiveListener() {
