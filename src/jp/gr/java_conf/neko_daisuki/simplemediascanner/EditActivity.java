@@ -1,69 +1,77 @@
 package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 
 public class EditActivity extends Activity {
 
-    private class OkButtonOnClickListener implements View.OnClickListener {
+    private interface Proc {
+
+        public void run(Database database, String path);
+    }
+
+    private class AddProc implements Proc {
+
+        @Override
+        public void run(Database database, String path) {
+            database.addTask(path);
+        }
+    }
+
+    private class EditProc implements Proc {
+
+        @Override
+        public void run(Database database, String path) {
+            database.editTask(mId, path);
+        }
+    }
+
+    private class OkayButtonOnClickListener implements View.OnClickListener {
 
         public void onClick(View _) {
-            ok();
+            mProc.run(mDatabase, mDirectoryEditText.getText().toString());
+            Util.writeDatabase(EditActivity.this, mDatabase);
+            finish();
         }
     }
 
     private class CancelButtonOnClickListener implements View.OnClickListener {
 
         public void onClick(View _) {
-            cancel();
+            finish();
         }
     }
 
-    public static final String EXTRA_KEY_DIRECTORY = "directory";
+    public static final String EXTRA_ID = "id";
 
-    private Directory mDirectory;
+    // documents
+    private Database mDatabase;
+    private int mId;
+
+    // views
     private EditText mDirectoryEditText;
+
+    // helpers
+    private Proc mProc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
-        mDirectoryEditText = (EditText)findViewById(R.id.directory_text);
+        mId = getIntent().getIntExtra(EXTRA_ID, -1);
+        mDatabase = Util.readDatabase(this);
+        mProc = mId != -1 ? new EditProc() : new AddProc();
 
-        Object o = getIntent().getSerializableExtra(EXTRA_KEY_DIRECTORY);
-        mDirectory = (Directory)o;
-        mDirectoryEditText.setText(mDirectory.path);
+        mDirectoryEditText = (EditText)findViewById(R.id.directory_text);
+        String path = mId != -1 ? mDatabase.getTask(mId).getPath() : "";
+        mDirectoryEditText.setText(path);
 
         View okButton = findViewById(R.id.ok_button);
-        okButton.setOnClickListener(new OkButtonOnClickListener());
+        okButton.setOnClickListener(new OkayButtonOnClickListener());
         View cancelButton = findViewById(R.id.cancel_button);
         cancelButton.setOnClickListener(new CancelButtonOnClickListener());
     }
-
-    private void ok() {
-        Directory directory = new Directory();
-        directory.id = mDirectory.id;
-        directory.path = mDirectoryEditText.getText().toString();
-
-        Intent i = getIntent();
-        i.putExtra(EXTRA_KEY_DIRECTORY, directory);
-        close(RESULT_OK, i);
-    }
-
-    private void cancel() {
-        close(RESULT_CANCELED, null);
-    }
-
-    private void close(int resultCode, Intent i) {
-        setResult(resultCode, i);
-        finish();
-    }
 }
-
-/**
- * vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
- */

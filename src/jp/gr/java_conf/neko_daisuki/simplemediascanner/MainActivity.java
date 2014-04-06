@@ -1,17 +1,14 @@
 package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ContentValues;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,116 +16,182 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.media.MediaScannerConnection;
-import android.media.MediaScannerConnection.MediaScannerConnectionClient;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
 import android.provider.BaseColumns;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
+import jp.gr.java_conf.neko_daisuki.simplemediascanner.Database.Task;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
 
-    private class DeleteDialogOnClickListener implements DialogInterface.OnClickListener {
+    public interface OnPositiveListener {
 
-        private int mPosition;
+        public void onPositive(int id);
+    }
 
-        public DeleteDialogOnClickListener(int position) {
-            mPosition = position;
+    public static class ConfirmDialog extends DialogFragment {
+
+        private class OnClickListener implements DialogInterface.OnClickListener {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mOnPositiveListener.onPositive(getArguments().getInt(KEY_ID));
+            }
         }
 
-        public void onClick(DialogInterface _, int __) {
-            Directory directory = mDirectories[mPosition];
-            SQLiteDatabase db = mDatabase.getWritableDatabase();
-            String where = String.format("%s=?", DatabaseHelper.Columns._ID);
-            String[] args = new String[] { Long.toString(directory.id) };
-            db.delete(DatabaseHelper.TABLE_NAME, where, args);
+        public static final String KEY_ID = "id";
+        public static final String KEY_PATH = "path";
 
-            updateDirectories();
+        private OnPositiveListener mOnPositiveListener;
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+
+            MainActivity main = (MainActivity)activity;
+            mOnPositiveListener = main.getPositiveListener();
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            String path = getArguments().getString(KEY_PATH);
+
+            Resources res = getResources();
+            String fmt = res.getString(R.string.delete_confirm_format);
+            String positive = res.getString(R.string.positive);
+            String negative = res.getString(R.string.negative);
+            String msg = String.format(fmt, path, positive, negative);
+
+            Context context = getActivity();
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle(R.string.delete_dialog_title);
+            builder.setMessage(msg);
+            builder.setPositiveButton(R.string.positive, new OnClickListener());
+            builder.setNegativeButton(R.string.negative, null);
+
+            return builder.create();
         }
     }
 
-    private class DirectoryAdapter extends ArrayAdapter<Directory> {
+    private class ConfirmDialogOnPositiveListener implements OnPositiveListener {
 
-        private abstract class ListButtonOnClickListener implements View.OnClickListener {
-
-            protected int mPosition;
-
-            public ListButtonOnClickListener(int position) {
-                mPosition = position;
-            }
-
-            public abstract void onClick(View _);
+        @Override
+        public void onPositive(int id) {
+            mDatabase.removeTask(id);
+            mAdapter.notifyDataSetChanged();
         }
+    }
 
-        private class DeleteButtonOnClickListener extends ListButtonOnClickListener {
+    private class Adapter extends BaseAdapter {
 
-            public DeleteButtonOnClickListener(int position) {
-                super(position);
-            }
+        private class TaskComparator implements Comparator<Database.Task> {
 
-            public void onClick(View _) {
-                showConfirmDialog(mPosition);
+            @Override
+            public int compare(Database.Task lhs, Database.Task rhs) {
+                return lhs.getPath().compareTo(rhs.getPath());
             }
         }
 
-        private class RunButtonOnClickListener extends ListButtonOnClickListener {
+        private abstract class OnClickListener implements View.OnClickListener {
 
-            public RunButtonOnClickListener(int position) {
-                super(position);
+            private Database.Task mTask;
+
+            public OnClickListener(Database.Task task) {
+                mTask = task;
             }
 
-            public void onClick(View _) {
-                Directory directory = mDirectories[mPosition];
-
-                String fmt = "Started scanning for %s.";
-                Log.i(LOG_TAG, String.format(fmt, directory.path));
-                mClient.pushDirectories(new Directory[] { directory });
-                mConnection.connect();
+            protected Database.Task getTask() {
+                return mTask;
             }
         }
 
-        private class EditButtonOnClickListener extends ListButtonOnClickListener {
+        private class RunButtonOnClickListener extends OnClickListener {
 
-            public EditButtonOnClickListener(int position) {
-                super(position);
+            public RunButtonOnClickListener(Task task) {
+                super(task);
             }
 
-            public void onClick(View _) {
-                Directory directory = mDirectories[mPosition];
-                startEditActivity(directory, RequestCode.EDIT);
+            @Override
+            public void onClick(View v) {
+                startMainService(new int [] { getTask().getId() });
             }
         }
 
-        private class Holder {
+        private class EditButtonOnClickListener extends OnClickListener {
 
-            public TextView path;
-            public Button runButton;
-            public Button editButton;
-            public Button deleteButton;
+            public EditButtonOnClickListener(Task task) {
+                super(task);
+            }
+
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MainActivity.this, EditActivity.class);
+                i.putExtra(EditActivity.EXTRA_ID, getTask().getId());
+                startActivity(i);
+            }
         }
 
+        private class DeleteButtonOnClickListener extends OnClickListener {
+
+            public DeleteButtonOnClickListener(Database.Task task) {
+                super(task);
+            }
+
+            @Override
+            public void onClick(View v) {
+                DialogFragment fragment = new ConfirmDialog();
+                Bundle args = new Bundle();
+                Database.Task task = getTask();
+                args.putInt(ConfirmDialog.KEY_ID, task.getId());
+                args.putString(ConfirmDialog.KEY_PATH, task.getPath());
+                fragment.setArguments(args);
+                fragment.show(getSupportFragmentManager(), "Delete the task");
+            }
+        }
+
+        // documents
+        private Database.Task[] mTasks = new Database.Task[0];
+
+        // helpers
+        private Comparator<Database.Task> mComparator = new TaskComparator();
         private LayoutInflater mInflater;
 
-        public DirectoryAdapter(Context context, Directory[] objects) {
-            super(context, 0, objects);
-
+        public Adapter() {
             String name = Context.LAYOUT_INFLATER_SERVICE;
-            mInflater = (LayoutInflater)context.getSystemService(name);
+            mInflater = (LayoutInflater)getSystemService(name);
+        }
+
+        @Override
+        public void notifyDataSetChanged() {
+            mTasks = mDatabase.getTasks();
+            Arrays.sort(mTasks, mComparator);
+            super.notifyDataSetChanged();
+        }
+
+        @Override
+        public int getCount() {
+            return mTasks.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return mTasks[position];
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return mTasks[position].getId();
         }
 
         @Override
@@ -136,42 +199,25 @@ public class MainActivity extends Activity {
             if (convertView == null) {
                 return getView(position, makeView(parent), parent);
             }
-            Holder holder = (Holder)convertView.getTag();
-            Directory directory = getItem(position);
-            holder.path.setText(directory.path);
 
-            holder.runButton.setOnClickListener(new RunButtonOnClickListener(position));
-            holder.editButton.setOnClickListener(new EditButtonOnClickListener(position));
-            holder.deleteButton.setOnClickListener(new DeleteButtonOnClickListener(position));
+            Database.Task task = mTasks[position];
+            int id = R.id.directory_text;
+            TextView text = (TextView)convertView.findViewById(id);
+            text.setText(task.getPath());
+
+            View deleteButton = convertView.findViewById(R.id.delete_button);
+            deleteButton.setOnClickListener(new DeleteButtonOnClickListener(task));
+            View editButton = convertView.findViewById(R.id.edit_button);
+            editButton.setOnClickListener(new EditButtonOnClickListener(task));
+            View runButton = convertView.findViewById(R.id.run_button);
+            runButton.setOnClickListener(new RunButtonOnClickListener(task));
 
             return convertView;
-        }
-
-        private TextView findTextView(View view, int id) {
-            return (TextView)view.findViewById(id);
-        }
-
-        private Button findButton(View view, int id) {
-            return (Button)view.findViewById(id);
         }
 
         private View makeView(ViewGroup parent) {
-            int layout = R.layout.list_row;
-            View convertView = mInflater.inflate(layout, parent, false);
-            Holder holder = new Holder();
-            holder.path = findTextView(convertView, R.id.directory_text);
-            holder.runButton = findButton(convertView, R.id.run_button);
-            holder.editButton = findButton(convertView, R.id.edit_button);
-            holder.deleteButton = findButton(convertView, R.id.delete_button);
-            convertView.setTag(holder);
-            return convertView;
+            return mInflater.inflate(R.layout.list_row, parent, false);
         }
-    }
-
-    private interface RequestCode {
-
-        public int ADD = 1;
-        public int EDIT = 2;
     }
 
     private static class DatabaseHelper extends SQLiteOpenHelper {
@@ -208,133 +254,37 @@ public class MainActivity extends Activity {
         }
     }
 
-    private class MediaScannerClient implements MediaScannerConnectionClient {
-
-        private class ShowToast implements Runnable {
-
-            private String mMessage;
-
-            public ShowToast(String message) {
-                mMessage = message;
-            }
-
-            public void run() {
-                String s = String.format("Simple Media Scanner: %s", mMessage);
-                Toast.makeText(MainActivity.this, s, Toast.LENGTH_LONG).show();
-            }
-        }
-
-        private Queue<File> mFiles = new LinkedList<File>();
-
-        public void onMediaScannerConnected() {
-            Log.i(LOG_TAG, "Connected to the service.");
-            scanNext();
-        }
-
-        public void onScanCompleted(String path, Uri uri) {
-            Log.i(LOG_TAG, String.format("Scanning %s was completed.", path));
-            scanNext();
-        }
-
-        public void pushDirectories(Directory[] directories) {
-            int len = directories.length;
-            File[] files = new File[len];
-            for (int i = 0; i < len; i++) {
-                files[i] = new File(directories[i].path);
-            }
-            pushFiles(files);
-        }
-
-        private void pushFiles(File[] files) {
-            for (File file: files) {
-                String fmt = "Pushed %s.";
-                Log.i(LOG_TAG, String.format(fmt, file.getAbsolutePath()));
-
-                mFiles.offer(file);
-            }
-        }
-
-        private void scanNext() {
-            File file;
-            while (((file = mFiles.poll()) != null) && file.isDirectory()) {
-                String fmt = "Directory found: %s";
-                Log.i(LOG_TAG, String.format(fmt, file.getAbsolutePath()));
-
-                pushFiles(file.listFiles());
-            }
-            if (file == null) {
-                mConnection.disconnect();
-                String msg = "Scanning ended.";
-                Log.i(LOG_TAG, msg);
-                requestToast(msg);
-                return;
-            }
-            String path = file.getAbsolutePath();
-            Log.i(LOG_TAG, String.format("File found: %s", path));
-            mConnection.scanFile(path, null);
-        }
-
-        private void requestToast(String message) {
-            mHandler.post(new ShowToast(message));
-        }
-    }
-
     private class AddButtonOnClickListener implements View.OnClickListener {
 
-        public void onClick(View _) {
-            startEditActivity(new Directory(), RequestCode.ADD);
+        @Override
+        public void onClick(View v) {
+            startActivity(new Intent(MainActivity.this, EditActivity.class));
         }
     }
 
     private class RunAllButtonOnClickListener implements View.OnClickListener {
 
         public void onClick(View _) {
-            Log.i(LOG_TAG, "Started scanning all directories.");
-            mClient.pushDirectories(mDirectories);
-            mConnection.connect();
-        }
-    }
-
-    private abstract class RequestProcedure {
-
-        public abstract void run(Directory directory);
-    }
-
-    private class EditRequestProcedure extends RequestProcedure {
-
-        public void run(Directory directory) {
-            SQLiteDatabase db = mDatabase.getWritableDatabase();
-            ContentValues values = makeContentValues(directory);
-            String where = String.format("%s=?", DatabaseHelper.Columns._ID);
-            String[] args = new String[] { Long.toString(directory.id) };
-            db.update(DatabaseHelper.TABLE_NAME, values, where, args);
-
-            updateDirectories();
-        }
-    }
-
-    private class AddRequestProcedure extends RequestProcedure {
-
-        public void run(Directory directory) {
-            SQLiteDatabase db = mDatabase.getWritableDatabase();
-            ContentValues values = makeContentValues(directory);
-            db.insertOrThrow(DatabaseHelper.TABLE_NAME, null, values);
-
-            updateDirectories();
+            Database.Task[] tasks = mDatabase.getTasks();
+            int length = tasks.length;
+            int[] ids = new int[length];
+            for (int i = 0; i < length; i++) {
+                ids[i] = tasks[i].getId();
+            }
+            startMainService(ids);
         }
     }
 
     private static final String LOG_TAG = "activity";
 
-    private Directory[] mDirectories;
+    // documents
+    private Database mDatabase;
 
-    private ListView mDirectoryList;
+    // views
+    private Adapter mAdapter;
 
-    private MediaScannerClient mClient;
-    private MediaScannerConnection mConnection;
-    private SQLiteOpenHelper mDatabase;
-    private SparseArray<RequestProcedure> mRequestProcedures;
-    private Handler mHandler;
+    // helpers
+    private SQLiteOpenHelper mOldDatabase;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -345,7 +295,7 @@ public class MainActivity extends Activity {
 
     public boolean onOptionsItemSelected(MenuItem item) {
         Intent i = new Intent(this, AboutActivity.class);
-        this.startActivity(i);
+        startActivity(i);
         return true;
     }
 
@@ -354,41 +304,31 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mDirectoryList = (ListView)findViewById(R.id.directory_list);
-        Button runAllButton = (Button)findViewById(R.id.run_all_button);
+        mAdapter = new Adapter();
+        ListView list = (ListView)findViewById(R.id.directory_list);
+        list.setAdapter(mAdapter);
+
+        View runAllButton = findViewById(R.id.run_all_button);
         runAllButton.setOnClickListener(new RunAllButtonOnClickListener());
-        Button addButton = (Button)findViewById(R.id.add_button);
+        View addButton = findViewById(R.id.add_button);
         addButton.setOnClickListener(new AddButtonOnClickListener());
 
-        mClient = new MediaScannerClient();
-        mConnection = new MediaScannerConnection(this, mClient);
-        mDatabase = new DatabaseHelper(this);
-        mRequestProcedures = new SparseArray<RequestProcedure>();
-        mRequestProcedures.put(RequestCode.ADD, new AddRequestProcedure());
-        mRequestProcedures.put(RequestCode.EDIT, new EditRequestProcedure());
-        mHandler = new Handler();
+        mOldDatabase = new DatabaseHelper(this);
+    }
 
-        updateDirectories();
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Util.writeDatabase(this, mDatabase);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        File directory = getApplicationDirectory();
-        if (!directory.exists()) {
-            importOldSettings();
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode != RESULT_OK) {
-            return;
-        }
-        String key = EditActivity.EXTRA_KEY_DIRECTORY;
-        Directory directory = (Directory)data.getSerializableExtra(key);
-        mRequestProcedures.get(requestCode).run(directory);
+        initializeApplicationDirectory();
+        mDatabase = Util.readDatabase(this);
+        mAdapter.notifyDataSetChanged();
     }
 
     private void showError(String msg) {
@@ -396,47 +336,37 @@ public class MainActivity extends Activity {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
-    private void showException(String msg, Throwable e) {
-        e.printStackTrace();
-        String s = String.format("%s: %s", msg, e.getMessage());
-        Toast.makeText(this, String.format(s), Toast.LENGTH_LONG).show();
-    }
-
-    private void importOldSettings() {
-        File appDir = getApplicationDirectory();
-        if (!appDir.mkdir()) {
-            String fmt = "Cannot create directory: %s";
-            showError(String.format(fmt, appDir.getAbsolutePath()));
+    private void initializeApplicationDirectory() {
+        File directory = Util.getApplicationDirectory();
+        if (directory.exists()) {
             return;
         }
-
-        Directory[] directories = queryDirectories();
-
-        try {
-            Writer writer = new FileWriter(getDataFile());
-            try {
-                new Gson().toJson(directories, writer);
-            }
-            finally {
-                writer.close();
-            }
+        if (!directory.mkdir()) {
+            showError(String.format("Cannot create directory: %s", directory));
+            return;
         }
-        catch (IOException e) {
-            showException("Cannot write json", e);
-        }
+        importOldDatabase();
     }
 
-    private Directory[] queryDirectories() {
-        List<Directory> directories = new ArrayList<Directory>();
+    private void importOldDatabase() {
+        Database database = new Database();
+        database.initializeEmptyDatabase();
+
+        List<String> directories = queryDirectories();
+        for (String path: directories) {
+            database.addTask(path);
+        }
+        Util.writeDatabase(this, database);
+    }
+
+    private List<String> queryDirectories() {
+        List<String> directories = new LinkedList<String>();
 
         try {
-            SQLiteDatabase db = mDatabase.getReadableDatabase();
-            String[] columns = new String[] {
-                DatabaseHelper.Columns._ID,
-                DatabaseHelper.Columns.PATH };
+            SQLiteDatabase db = mOldDatabase.getReadableDatabase();
             Cursor cursor = db.query(
                     DatabaseHelper.TABLE_NAME,
-                    columns,
+                    new String[] { DatabaseHelper.Columns.PATH },
                     null,   // selection
                     null,   // selection args
                     null,   // group by
@@ -444,10 +374,7 @@ public class MainActivity extends Activity {
                     null);  // order by
             try {
                 while (cursor.moveToNext()) {
-                    Directory directory = new Directory();
-                    directory.id = cursor.getLong(0);
-                    directory.path = cursor.getString(1);
-                    directories.add(directory);
+                    directories.add(cursor.getString(0));
                 }
             }
             finally {
@@ -455,61 +382,19 @@ public class MainActivity extends Activity {
             }
         }
         finally {
-            mDatabase.close();
+            mOldDatabase.close();
         }
 
-        return directories.toArray(new Directory[0]);
+        return directories;
     }
 
-    private void startEditActivity(Directory directory, int requestCode) {
-        Intent i = new Intent(this, EditActivity.class);
-        i.putExtra(EditActivity.EXTRA_KEY_DIRECTORY, directory);
-        startActivityForResult(i, requestCode);
+    private OnPositiveListener getPositiveListener() {
+        return new ConfirmDialogOnPositiveListener();
     }
 
-    private ContentValues makeContentValues(Directory directory) {
-        ContentValues values = new ContentValues();
-        values.put(DatabaseHelper.Columns.PATH, directory.path);
-        return values;
-    }
-
-    private void updateList() {
-        mDirectoryList.setAdapter(new DirectoryAdapter(this, mDirectories));
-    }
-
-    private void updateDirectories() {
-        mDirectories = queryDirectories();
-        updateList();
-    }
-
-    private void showConfirmDialog(int position) {
-        Directory directory = mDirectories[position];
-        Resources res = getResources();
-        String fmt = res.getString(R.string.delete_confirm_format);
-        String positive = res.getString(R.string.positive);
-        String negative = res.getString(R.string.negative);
-        String msg = String.format(fmt, directory.path, positive, negative);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.delete_dialog_title);
-        builder.setMessage(msg);
-        builder.setPositiveButton(R.string.positive, new DeleteDialogOnClickListener(position));
-        builder.setNegativeButton(R.string.negative, null);
-
-        builder.create().show();
-    }
-
-    private File getDataFile() {
-        String fmt = "%s/data.json";
-        return new File(String.format(fmt, getApplicationDirectory()));
-    }
-
-    private File getApplicationDirectory() {
-        String directory = Environment.getExternalStorageDirectory().getAbsolutePath();
-        return new File(String.format("%s/.simple-media-scanner", directory));
+    private void startMainService(int[] ids) {
+        Intent intent = new Intent(this, MainService.class);
+        intent.putExtra(MainService.EXTRA_IDS, ids);
+        startService(intent);
     }
 }
-
-/**
- * vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
- */
