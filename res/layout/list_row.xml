@@ -5,7 +5,9 @@
         android:id="@+id/directory_text"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:layout_marginLeft="4dip"
+        android:layout_marginRight="4dip"/>
     <Button
         android:id="@+id/run_button"
         android:layout_width="wrap_content"
