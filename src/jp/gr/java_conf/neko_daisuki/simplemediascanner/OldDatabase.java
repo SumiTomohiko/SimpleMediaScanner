@@ -6,6 +6,7 @@ import java.util.List;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
@@ -53,14 +54,20 @@ class OldDatabase {
         SQLiteOpenHelper database = new DatabaseHelper(context);
         try {
             SQLiteDatabase db = database.getReadableDatabase();
-            Cursor cursor = db.query(
-                    DatabaseHelper.TABLE_NAME,
-                    new String[] { DatabaseHelper.Columns.PATH },
-                    null,   // selection
-                    null,   // selection args
-                    null,   // group by
-                    null,   // having
-                    null);  // order by
+            Cursor cursor;
+            try {
+                cursor = db.query(
+                        DatabaseHelper.TABLE_NAME,
+                        new String[] { DatabaseHelper.Columns.PATH },
+                        null,   // selection
+                        null,   // selection args
+                        null,   // group by
+                        null,   // having
+                        null);  // order by
+            }
+            catch (SQLiteException e) {
+                return directories;
+            }
             try {
                 while (cursor.moveToNext()) {
                     directories.add(cursor.getString(0));
