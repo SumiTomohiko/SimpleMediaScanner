@@ -109,6 +109,7 @@ public class Database {
     }
 
     private static final Type TASK_COLLECTION_TYPE = new TypeToken<Collection<Task>>() {}.getType();
+    private static final Type SCHEDULE_COLLECTION_TYPE = new TypeToken<Collection<Schedule>>() {}.getType();
 
     // documents
     private SparseArray<Task> mTasks;
@@ -140,16 +141,23 @@ public class Database {
         mTasks.remove(id);
     }
 
+    public void addSchedule(int hour, int minute) {
+        int id = getNewId(mSchedules);
+        mSchedules.put(id, new Schedule(id, hour, minute));
+    }
+
     public void read(File directory) throws IOException {
         Gson gson = makeGson();
         String path = directory.getAbsolutePath();
         mTasks = readTasks(gson, path);
+        mSchedules = readSchedules(gson, path);
     }
 
     public void write(File directory) throws IOException {
         Gson gson = makeGson();
         String path = directory.getAbsolutePath();
         writeTasks(gson, path);
+        writeSchedules(gson, path);
     }
 
     public void initializeEmptyDatabase() {
@@ -164,6 +172,10 @@ public class Database {
         return builder.create();
     }
 
+    private String getSchedulePath(String directory) {
+        return String.format("%s/schedules.json", directory);
+    }
+
     private String getTasksPath(String directory) {
         return String.format("%s/tasks.json", directory);
     }
@@ -174,6 +186,18 @@ public class Database {
             a.put(e.getId(), e);
         }
         return a;
+    }
+
+    private SparseArray<Schedule> readSchedules(Gson gson, String directory) throws IOException {
+        Collection<Schedule> schedules;
+        Reader reader = new FileReader(getSchedulePath(directory));
+        try {
+            schedules = gson.fromJson(reader, SCHEDULE_COLLECTION_TYPE);
+        }
+        finally {
+            reader.close();
+        }
+        return makeArray(schedules);
     }
 
     private SparseArray<Task> readTasks(Gson gson, String directory) throws IOException {
@@ -190,6 +214,16 @@ public class Database {
             reader.close();
         }
         return makeArray(tasks);
+    }
+
+    private void writeSchedules(Gson gson, String directory) throws IOException {
+        Writer writer = new FileWriter(getSchedulePath(directory));
+        try {
+            gson.toJson(makeCollection(mSchedules), writer);
+        }
+        finally {
+            writer.close();
+        }
     }
 
     private void writeTasks(Gson gson, String directory) throws IOException {

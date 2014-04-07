@@ -28,6 +28,10 @@
 
     <!-- EditActivity -->
     <string name="directory_label">Directory path</string>
+    <string name="add_schedule">Add a new schedule&#8230;</string>
+    <string name="hourly">Hourly</string>
+    <string name="daily">Daily</string>
+    <string name="hour_minute_separator">:</string>
 </resources>
 <!--
 vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4

@@ -1,11 +1,12 @@
 package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
-import android.app.Activity;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.widget.EditText;
 
-public class EditActivity extends Activity {
+public class EditActivity extends FragmentActivity implements ScheduleFragment.OnScheduleGivenListener {
 
     private interface Proc {
 
@@ -25,6 +26,15 @@ public class EditActivity extends Activity {
         @Override
         public void run(Database database, String path) {
             database.editTask(mId, path);
+        }
+    }
+
+    private class AddScheduleButtonOnClickListener implements View.OnClickListener {
+
+        @Override
+        public void onClick(View v) {
+            DialogFragment fragment = new ScheduleFragment();
+            fragment.show(getSupportFragmentManager(), "new schedule");
         }
     }
 
@@ -57,6 +67,12 @@ public class EditActivity extends Activity {
     private Proc mProc;
 
     @Override
+    public void onScheduleGiven(ScheduleFragment fragment, int hour,
+                                int minute) {
+        mDatabase.addSchedule(hour, minute);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
@@ -69,6 +85,8 @@ public class EditActivity extends Activity {
         String path = mId != -1 ? mDatabase.getTask(mId).getPath() : "";
         mDirectoryEditText.setText(path);
 
+        View addScheduleButton = findViewById(R.id.add_schedule_button);
+        addScheduleButton.setOnClickListener(new AddScheduleButtonOnClickListener());
         View okButton = findViewById(R.id.ok_button);
         okButton.setOnClickListener(new OkayButtonOnClickListener());
         View cancelButton = findViewById(R.id.cancel_button);
