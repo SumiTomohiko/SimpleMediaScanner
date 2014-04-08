@@ -190,7 +190,8 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
     @Override
     public void onScheduleGiven(ScheduleFragment fragment, int hour,
                                 int minute) {
-        mDatabase.addSchedule(hour, minute);
+        int scheduleId = mDatabase.addSchedule(hour, minute);
+        mDatabase.addScheduleToTask(mId, scheduleId);
         mAdapter.notifyDataSetChanged();
     }
 
