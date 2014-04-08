@@ -129,27 +129,6 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
         }
     }
 
-    private interface Proc {
-
-        public void run(Database database, String path);
-    }
-
-    private class AddProc implements Proc {
-
-        @Override
-        public void run(Database database, String path) {
-            database.addTask(path);
-        }
-    }
-
-    private class EditProc implements Proc {
-
-        @Override
-        public void run(Database database, String path) {
-            database.editTask(mId, path);
-        }
-    }
-
     private class AddScheduleButtonOnClickListener implements View.OnClickListener {
 
         @Override
@@ -162,7 +141,7 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
     private class OkayButtonOnClickListener implements View.OnClickListener {
 
         public void onClick(View _) {
-            mProc.run(mDatabase, mDirectoryEditText.getText().toString());
+            mDatabase.editTask(mId, mDirectoryEditText.getText().toString());
             Util.writeDatabase(EditActivity.this, mDatabase);
             finish();
         }
@@ -185,9 +164,6 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
     private EditText mDirectoryEditText;
     private Adapter mAdapter;
 
-    // helpers
-    private Proc mProc;
-
     @Override
     public void onScheduleGiven(ScheduleFragment fragment, int hour,
                                 int minute) {
@@ -200,13 +176,12 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
-        mId = getIntent().getIntExtra(EXTRA_ID, -1);
         mDatabase = Util.readDatabase(this);
-        mProc = mId != -1 ? new EditProc() : new AddProc();
+        int taskId = getIntent().getIntExtra(EXTRA_ID, -1);
+        mId = taskId != -1 ? taskId : mDatabase.addTask("");
 
         mDirectoryEditText = (EditText)findViewById(R.id.directory_text);
-        String path = mId != -1 ? mDatabase.getTask(mId).getPath() : "";
-        mDirectoryEditText.setText(path);
+        mDirectoryEditText.setText(mDatabase.getTask(mId).getPath());
 
         View addScheduleButton = findViewById(R.id.add_schedule_button);
         addScheduleButton.setOnClickListener(new AddScheduleButtonOnClickListener());
@@ -216,8 +191,8 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
         cancelButton.setOnClickListener(new CancelButtonOnClickListener());
 
         mAdapter = new Adapter();
-        int id = R.id.schedule_list;
-        AbsListView scheduleList = (AbsListView)findViewById(id);
+        int list_id = R.id.schedule_list;
+        AbsListView scheduleList = (AbsListView)findViewById(list_id);
         scheduleList.setAdapter(mAdapter);
         mAdapter.notifyDataSetChanged();
     }

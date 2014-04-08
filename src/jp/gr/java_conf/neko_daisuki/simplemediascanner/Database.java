@@ -160,8 +160,10 @@ public class Database {
     private SparseArray<Schedule> mSchedules;
     private Set<TaskSchedule> mTaskSchedule;
 
-    public void addTask(String path) {
-        editTask(getNewId(mTasks), path);
+    public int addTask(String path) {
+        int id = getNewId(mTasks);
+        editTask(id, path);
+        return id;
     }
 
     public void editTask(int id, String path) {
@@ -194,9 +196,10 @@ public class Database {
         mTasks.remove(id);
     }
 
-    public void addSchedule(int hour, int minute) {
+    public int addSchedule(int hour, int minute) {
         int id = getNewId(mSchedules);
         mSchedules.put(id, new Schedule(id, hour, minute));
+        return id;
     }
 
     public void addScheduleToTask(int taskId, int scheduleId) {
