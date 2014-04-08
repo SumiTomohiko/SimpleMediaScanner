@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Application -->
-    <string name="app_name">Simple Media Scanner</string>
+    <string name="app_name">Simple Media Scanner 2</string>
 
     <!-- Utility strings -->
     <string name="positive">Okay</string>
