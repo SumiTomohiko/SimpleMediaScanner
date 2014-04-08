@@ -41,7 +41,30 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
 
         private class CheckBoxListener implements CompoundButton.OnCheckedChangeListener {
 
+            private abstract class Proc {
+
+                public abstract void run();
+            }
+
+            private class CheckedProc extends Proc {
+
+                @Override
+                public void run() {
+                    mDatabase.addScheduleToTask(mId, mScheduleId);
+                }
+            }
+
+            private class UncheckedProc extends Proc {
+
+                @Override
+                public void run() {
+                    mDatabase.removeScheduleFromTask(mId, mScheduleId);
+                }
+            }
+
             private int mScheduleId;
+            private Proc mCheckedProc = new CheckedProc();
+            private Proc mUncheckedProc = new UncheckedProc();
 
             public CheckBoxListener(int scheduleId) {
                 mScheduleId = scheduleId;
@@ -50,7 +73,7 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
             @Override
             public void onCheckedChanged(CompoundButton buttonView,
                                          boolean isChecked) {
-                mDatabase.addScheduleToTask(mId, mScheduleId);
+                (isChecked ? mCheckedProc : mUncheckedProc).run();
             }
         }
 

@@ -202,6 +202,16 @@ public class Database {
         return id;
     }
 
+    public void removeScheduleFromTask(int taskId, int scheduleId) {
+        for (TaskSchedule e: mTaskSchedule) {
+            int id = e.getTaskId();
+            if ((id == taskId) && (e.getScheduleId() == scheduleId)) {
+                mTaskSchedule.remove(e);
+                return;
+            }
+        }
+    }
+
     public void addScheduleToTask(int taskId, int scheduleId) {
         mTaskSchedule.add(new TaskSchedule(taskId, scheduleId));
     }
