@@ -44,8 +44,10 @@ public class Database {
 
     public static class Schedule extends Row {
 
+        public static final int HOUR_WILDCARD = -1;
+
         @SerializedName("hour")
-        private int mHour;      // -1 indicates that this is hourly.
+        private int mHour;
 
         @SerializedName("minute")
         private int mMinute;
@@ -54,6 +56,18 @@ public class Database {
             super(id);
             mHour = hour;
             mMinute = minute;
+        }
+
+        public int getHour() {
+            return mHour;
+        }
+
+        public int getMinute() {
+            return mMinute;
+        }
+
+        public boolean isDaily() {
+            return mHour != HOUR_WILDCARD;
         }
     }
 
@@ -126,6 +140,15 @@ public class Database {
 
     public Task getTask(int id) {
         return mTasks.get(id);
+    }
+
+    public Schedule[] getSchedules() {
+        int size = mSchedules.size();
+        Schedule[] schedules = new Schedule[size];
+        for (int i = 0; i < size; i++) {
+            schedules[i] = mSchedules.valueAt(i);
+        }
+        return schedules;
     }
 
     public Task[] getTasks() {

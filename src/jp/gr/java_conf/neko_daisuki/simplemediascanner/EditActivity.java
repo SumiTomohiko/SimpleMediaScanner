@@ -1,12 +1,100 @@
 package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Locale;
+
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class EditActivity extends FragmentActivity implements ScheduleFragment.OnScheduleGivenListener {
+
+    private class Adapter extends BaseAdapter {
+
+        private class ScheduleComparator implements Comparator<Database.Schedule> {
+
+            @Override
+            public int compare(Database.Schedule lhs, Database.Schedule rhs) {
+                if (lhs.isDaily() && !rhs.isDaily()) {
+                    return 1;
+                }
+                if (!lhs.isDaily() && rhs.isDaily()) {
+                    return -1;
+                }
+                int n = lhs.getHour() - rhs.getHour();
+                if (n != 0) {
+                    return n;
+                }
+                return lhs.getMinute() - rhs.getMinute();
+            }
+        }
+
+        // documents
+        private Database.Schedule[] mSchedules = new Database.Schedule[0];
+
+        // helpers
+        private LayoutInflater mInflater;
+        private Comparator<Database.Schedule> mComparator = new ScheduleComparator();
+
+        public Adapter() {
+            String name = Context.LAYOUT_INFLATER_SERVICE;
+            mInflater = (LayoutInflater)getSystemService(name);
+        }
+
+        @Override
+        public void notifyDataSetChanged() {
+            mSchedules = mDatabase.getSchedules();
+            Arrays.sort(mSchedules, mComparator);
+            super.notifyDataSetChanged();
+        }
+
+        @Override
+        public int getCount() {
+            return mSchedules.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return mSchedules[position];
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return mSchedules[position].getId();
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                return getView(position, makeView(), parent);
+            }
+            initializeView(position, convertView);
+            return convertView;
+        }
+
+        private void initializeView(int position, View view) {
+            Database.Schedule schedule = mSchedules[position];
+            boolean isDaily = schedule.isDaily();
+            String hour = isDaily ? String.format(Locale.ROOT, "%02d", schedule.getHour())
+                                  : " *";
+            int minute = schedule.getMinute();
+            TextView scheduleText = (TextView)view.findViewById(R.id.schedule_text);
+            scheduleText.setText(String.format("%s:%02d", hour, minute));
+        }
+
+        private View makeView() {
+            return mInflater.inflate(R.layout.row_schedule, null);
+        }
+    }
 
     private interface Proc {
 
@@ -62,6 +150,7 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
 
     // views
     private EditText mDirectoryEditText;
+    private Adapter mAdapter;
 
     // helpers
     private Proc mProc;
@@ -70,6 +159,7 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
     public void onScheduleGiven(ScheduleFragment fragment, int hour,
                                 int minute) {
         mDatabase.addSchedule(hour, minute);
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -91,5 +181,11 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
         okButton.setOnClickListener(new OkayButtonOnClickListener());
         View cancelButton = findViewById(R.id.cancel_button);
         cancelButton.setOnClickListener(new CancelButtonOnClickListener());
+
+        mAdapter = new Adapter();
+        int id = R.id.schedule_list;
+        AbsListView scheduleList = (AbsListView)findViewById(id);
+        scheduleList.setAdapter(mAdapter);
+        mAdapter.notifyDataSetChanged();
     }
 }

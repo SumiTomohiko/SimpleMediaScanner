@@ -87,7 +87,8 @@ public class ScheduleFragment extends DialogFragment {
 
         public void onClick(DialogInterface dialog, int which) {
             boolean isChecked = mDailyRadio.isChecked();
-            int hour = isChecked ? mHourSpinner.getSelectedItemPosition() : -1;
+            int hour = isChecked ? mHourSpinner.getSelectedItemPosition()
+                                 : Database.Schedule.HOUR_WILDCARD;
             int minute = mMinuteSpinner.getSelectedItemPosition();
             mListener.onScheduleGiven(ScheduleFragment.this, hour, minute);
         }
