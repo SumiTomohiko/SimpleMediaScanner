@@ -193,6 +193,16 @@ public class Database {
     }
 
     public void removeTask(int id) {
+        Collection<TaskSchedule> c = new HashSet<TaskSchedule>();
+        for (TaskSchedule e: mTaskSchedule) {
+            if (e.getTaskId() == id) {
+                c.add(e);
+            }
+        }
+        for (TaskSchedule e: c) {
+            mTaskSchedule.remove(e);
+        }
+
         mTasks.remove(id);
     }
 
