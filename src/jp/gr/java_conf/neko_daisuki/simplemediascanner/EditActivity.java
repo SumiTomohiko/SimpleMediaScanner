@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -35,6 +36,21 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
                     return n;
                 }
                 return lhs.getMinute() - rhs.getMinute();
+            }
+        }
+
+        private class CheckBoxListener implements CompoundButton.OnCheckedChangeListener {
+
+            private int mScheduleId;
+
+            public CheckBoxListener(int scheduleId) {
+                mScheduleId = scheduleId;
+            }
+
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView,
+                                         boolean isChecked) {
+                mDatabase.addScheduleToTask(mId, mScheduleId);
             }
         }
 
@@ -81,8 +97,25 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
             return convertView;
         }
 
+        private boolean contains(int[] a, int key) {
+            int length = a.length;
+            for (int i = 0; i < length; i++) {
+                if (a[i] == key) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private void initializeView(int position, View view) {
             Database.Schedule schedule = mSchedules[position];
+            int scheduleId = schedule.getId();
+
+            CompoundButton checkBox = (CompoundButton)view.findViewById(R.id.checkbox);
+            int[] ids = mDatabase.getScheduleIdsOfTask(mId);
+            checkBox.setChecked(contains(ids, scheduleId));
+            checkBox.setOnCheckedChangeListener(new CheckBoxListener(scheduleId));
+
             boolean isDaily = schedule.isDaily();
             String hour = isDaily ? String.format(Locale.ROOT, "%02d", schedule.getHour())
                                   : " *";
