@@ -136,8 +136,8 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
 
             CompoundButton checkBox = (CompoundButton)view.findViewById(R.id.checkbox);
             int[] ids = mDatabase.getScheduleIdsOfTask(mId);
-            checkBox.setChecked(contains(ids, scheduleId));
             checkBox.setOnCheckedChangeListener(new CheckBoxListener(scheduleId));
+            checkBox.setChecked(contains(ids, scheduleId));
 
             boolean isDaily = schedule.isDaily();
             String hour = isDaily ? String.format(Locale.ROOT, "%02d", schedule.getHour())
