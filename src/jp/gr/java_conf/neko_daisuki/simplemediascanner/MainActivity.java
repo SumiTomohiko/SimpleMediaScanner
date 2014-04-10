@@ -83,6 +83,9 @@ public class MainActivity extends FragmentActivity {
         @Override
         public void onPositive(int id) {
             mDatabase.removeTask(id);
+            Context context = MainActivity.this;
+            Util.writeDatabase(context, mDatabase);
+            PeriodicalUtil.schedule(context, mDatabase);
             mAdapter.notifyDataSetChanged();
         }
     }
