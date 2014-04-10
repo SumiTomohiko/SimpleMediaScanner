@@ -12,7 +12,11 @@ class Util {
     public static File getApplicationDirectory() {
         File directory = Environment.getExternalStorageDirectory();
         String path = directory.getAbsolutePath();
-        return new File(String.format("%s/.simple-media-scanner", path));
+        return new File(joinPath(path, ".simple-media-scanner"));
+    }
+
+    public static File getLogDirectory() {
+        return new File(getApplicationDirectory(), "log");
     }
 
     public static Database readDatabase(Context context) {
@@ -39,5 +43,9 @@ class Util {
         e.printStackTrace();
         String s = String.format("%s: %s", msg, e.getMessage());
         Toast.makeText(context, String.format(s), Toast.LENGTH_LONG).show();
+    }
+
+    public static String joinPath(String s, String t) {
+        return String.format("%s%s%s", s, File.separator, t);
     }
 }

@@ -165,7 +165,9 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
 
         public void onClick(View _) {
             mDatabase.editTask(mId, mDirectoryEditText.getText().toString());
-            Util.writeDatabase(EditActivity.this, mDatabase);
+            Context context = EditActivity.this;
+            Util.writeDatabase(context, mDatabase);
+            PeriodicalUtil.schedule(context, mDatabase);
             finish();
         }
     }

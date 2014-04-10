@@ -8,6 +8,7 @@
         android:minSdkVersion="11"
         android:targetSdkVersion="19"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -26,6 +27,21 @@
             android:name=".AboutActivity"
             android:label="@string/app_name"/>
         <service android:name=".MainService"/>
+        <service android:name=".PeriodicalService"/>
+        <receiver android:name=".MainReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.DATE_CHANGED"/>
+                <action android:name="android.intent.action.TIME_SET"/>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+            </intent-filter>
+            <intent-filter>
+                <action
+                    android:name="android.intent.action.PACKAGE_REPLACED"
+                    android:path="jp.gr.java_conf.neko_daisuki.simplemediascaner"
+                    android:scheme="package"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
 <!--

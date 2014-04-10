@@ -70,6 +70,11 @@ public class Database {
         public boolean isDaily() {
             return mHour != HOUR_WILDCARD;
         }
+
+        public String toString() {
+            String fmt = "Schedule(id=%d, hour=%d, minute=%d)";
+            return String.format(fmt, getId(), mHour, mMinute);
+        }
     }
 
     public static class TaskSchedule {
@@ -226,6 +231,16 @@ public class Database {
         mTaskSchedule.add(new TaskSchedule(taskId, scheduleId));
     }
 
+    public int[] getTaskIdsOfSchedule(int scheduleId) {
+        List<Integer> l = new LinkedList<Integer>();
+        for (TaskSchedule datum: mTaskSchedule) {
+            if (datum.getScheduleId() == scheduleId) {
+                l.add(Integer.valueOf(datum.getTaskId()));
+            }
+        }
+        return convertIntegerListToArray(l);
+    }
+
     public int[] getScheduleIdsOfTask(int taskId) {
         List<Integer> l = new LinkedList<Integer>();
         for (TaskSchedule datum: mTaskSchedule) {
@@ -233,12 +248,7 @@ public class Database {
                 l.add(Integer.valueOf(datum.getScheduleId()));
             }
         }
-        int size = l.size();
-        int[] ids = new int[size];
-        for (int i = 0; i < size; i++) {
-            ids[i] = l.get(i).intValue();
-        }
-        return ids;
+        return convertIntegerListToArray(l);
     }
 
     public void read(File directory) throws IOException {
@@ -369,5 +379,14 @@ public class Database {
     private int getNewId(SparseArray<?> a) {
         int size = a.size();
         return 0 < size ? a.keyAt(size - 1) + 1 : 0;
+    }
+
+    private int[] convertIntegerListToArray(List<Integer> l) {
+        int size = l.size();
+        int[] a = new int[size];
+        for (int i = 0; i < size; i++) {
+            a[i] = l.get(i).intValue();
+        }
+        return a;
     }
 }

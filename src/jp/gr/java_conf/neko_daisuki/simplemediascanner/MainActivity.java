@@ -118,7 +118,8 @@ public class MainActivity extends FragmentActivity {
 
             @Override
             public void onClick(View v) {
-                startMainService(new int [] { getTask().getId() });
+                int[] ids = new int[] { getTask().getId() };
+                ServiceUtil.startMainService(MainActivity.this, ids);
             }
         }
 
@@ -231,7 +232,7 @@ public class MainActivity extends FragmentActivity {
             for (int i = 0; i < length; i++) {
                 ids[i] = tasks[i].getId();
             }
-            startMainService(ids);
+            ServiceUtil.startMainService(MainActivity.this, ids);
         }
     }
 
@@ -291,25 +292,31 @@ public class MainActivity extends FragmentActivity {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
+    private boolean makeDirectory(File directory) {
+        if (!directory.isDirectory() && !directory.mkdir()) {
+            String fmt = "Cannot create directory: %s";
+            showError(String.format(fmt, directory.getAbsolutePath()));
+            return false;
+        }
+        return true;
+    }
+
     private void initializeApplicationDirectory() {
         File directory = Util.getApplicationDirectory();
-        if (directory.exists()) {
+        boolean initialized = directory.exists();
+        if (!makeDirectory(directory)) {
             return;
         }
-        if (!directory.mkdir()) {
-            showError(String.format("Cannot create directory: %s", directory));
+        File logDirectory = Util.getLogDirectory();
+        if (!makeDirectory(logDirectory)) {
             return;
         }
-        OldDatabase.importOldDatabase(this);
+        if (!initialized) {
+            OldDatabase.importOldDatabase(this);
+        }
     }
 
     private OnPositiveListener getPositiveListener() {
         return new ConfirmDialogOnPositiveListener();
-    }
-
-    private void startMainService(int[] ids) {
-        Intent intent = new Intent(this, MainService.class);
-        intent.putExtra(MainService.EXTRA_IDS, ids);
-        startService(intent);
     }
 }
