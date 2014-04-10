@@ -1,5 +1,6 @@
 package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -91,6 +92,10 @@ public class PeriodicalUtil {
     public static void schedule(Context context, Database database) {
         Schedule[] schedules = database.getSchedules();
         int length = schedules.length;
+        if (length == 0) {
+            removeLogFile();
+            return;
+        }
         MostRecentPair[] pairs = new MostRecentPair[length];
         Now now = new Now();
         for (int i = 0; i < length; i++) {
@@ -167,14 +172,21 @@ public class PeriodicalUtil {
         return String.format(fmt, year, month, day, hour, minute);
     }
 
+    private static void removeLogFile() {
+        new File(getLogPath()).delete();
+    }
+
+    private static String getLogPath() {
+        String directory = Util.getLogDirectory().getAbsolutePath();
+        return Util.joinPath(directory, "next_schedule");
+    }
+
     private static void logSchedule(Calendar calendar) {
         String s = formatCalendar(calendar);
         Log.i(LOG_TAG, String.format("Next schedule: %s", s));
 
-        String directory = Util.getLogDirectory().getAbsolutePath();
-        String path = Util.joinPath(directory, "next_schedule");
         try {
-            FileWriter out = new FileWriter(path);
+            FileWriter out = new FileWriter(getLogPath());
             try {
                 PrintWriter writer = new PrintWriter(out);
                 try {
