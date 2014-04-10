@@ -126,7 +126,7 @@ public class PeriodicalUtil {
         }
         logSchedule(mostRecentTime);
 
-        Intent intent = new Intent(context, MainService.class);
+        Intent intent = new Intent(context, PeriodicalService.class);
         intent.putExtra(PeriodicalService.EXTRA_IDS, ids);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         PendingIntent pendingIntent = PendingIntent.getService(context, 0,
