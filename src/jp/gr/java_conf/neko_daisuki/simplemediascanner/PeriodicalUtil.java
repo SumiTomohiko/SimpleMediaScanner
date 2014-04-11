@@ -90,7 +90,8 @@ public class PeriodicalUtil {
     private static final String LOG_TAG = "periodical";
 
     public static void schedule(Context context, Database database) {
-        Schedule[] schedules = database.getSchedules();
+        Schedule[] allSchedules = database.getSchedules();
+        Schedule[] schedules = dropSchedulesWithNoTasks(database, allSchedules);
         int length = schedules.length;
         if (length == 0) {
             removeLogFile();
@@ -203,5 +204,19 @@ public class PeriodicalUtil {
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static Schedule[] dropSchedulesWithNoTasks(Database database,
+                                                       Schedule[] schedules) {
+        Collection<Schedule> c = new HashSet<Schedule>();
+        int length = schedules.length;
+        for (int i = 0; i < length; i++) {
+            Schedule schedule = schedules[i];
+            int[] tasks = database.getTaskIdsOfSchedule(schedule.getId());
+            if (0 < tasks.length) {
+                c.add(schedule);
+            }
+        }
+        return c.toArray(new Schedule[0]);
     }
 }
