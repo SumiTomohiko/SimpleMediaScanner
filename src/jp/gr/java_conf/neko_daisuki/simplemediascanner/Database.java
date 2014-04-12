@@ -267,10 +267,21 @@ public class Database {
         writeTaskSchedule(gson, path);
     }
 
-    public void initializeEmptyDatabase() {
+    public void initializeDatabase() {
         mTasks = new SparseArray<Task>();
         mSchedules = new SparseArray<Schedule>();
         mTaskSchedule = new HashSet<TaskSchedule>();
+        initializeSchedules(mSchedules);
+    }
+
+    private void initializeSchedules(SparseArray<Schedule> schedules) {
+        for (int minute = 0; minute < 60; minute +=5) {
+            addSchedule(-1, minute);
+        }
+        for (int hour = 0; hour < 24; hour++) {
+            addSchedule(hour, 0);
+            addSchedule(hour, 30);
+        }
     }
 
     private Gson makeGson() {
