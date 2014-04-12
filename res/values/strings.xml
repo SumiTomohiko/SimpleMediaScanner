@@ -32,6 +32,14 @@
     <string name="hourly">Hourly</string>
     <string name="daily">Daily</string>
     <string name="hour_minute_separator">:</string>
+
+    <!-- AboutActivity -->
+    <string name="version_title">Version</string>
+    <string name="authors_website_title">Author\'s website</string>
+    <string name="url">
+        http://neko-daisuki.ddo.jp/~SumiTomohiko/index.html
+    </string>
+    <string name="license_title">License</string>
 </resources>
 <!--
 vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
