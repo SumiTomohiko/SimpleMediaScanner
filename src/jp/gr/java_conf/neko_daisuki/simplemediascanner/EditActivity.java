@@ -152,11 +152,14 @@ public class EditActivity extends FragmentActivity implements DirectoryFragment.
             checkBox.setChecked(contains(ids, scheduleId));
 
             boolean isDaily = schedule.isDaily();
-            String hour = isDaily ? String.format(Locale.ROOT, "%02d", schedule.getHour())
-                                  : " *";
+            String hour = isDaily ? formatHour(schedule.getHour()) : " *";
             int minute = schedule.getMinute();
             TextView scheduleText = (TextView)view.findViewById(R.id.schedule_text);
             scheduleText.setText(String.format("%s:%02d", hour, minute));
+        }
+
+        private String formatHour(int hour) {
+            return String.format(Locale.ROOT, "%02d", hour);
         }
 
         private View makeView() {

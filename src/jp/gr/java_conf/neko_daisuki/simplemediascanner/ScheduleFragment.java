@@ -112,7 +112,8 @@ public class ScheduleFragment extends DialogFragment {
         Context context = getActivity();
         mHourAdapter = makeIntegerAdapter(context, 24);
 
-        Object service = context.getSystemService(EditActivity.LAYOUT_INFLATER_SERVICE);
+        String name = Context.LAYOUT_INFLATER_SERVICE;
+        Object service = context.getSystemService(name);
         LayoutInflater inflater = (LayoutInflater)service;
         View view = inflater.inflate(R.layout.fragment_schedule, null);
         mHourSpinner = (AbsSpinner)view.findViewById(R.id.hour_spinner);
