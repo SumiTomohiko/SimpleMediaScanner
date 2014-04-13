@@ -27,7 +27,8 @@
     </string>
 
     <!-- EditActivity -->
-    <string name="directory_label">Directory path</string>
+    <string name="directory_label">Directory</string>
+    <string name="select_label">Select&#8230;</string>
     <string name="add_schedule">Add a new schedule&#8230;</string>
     <string name="hourly">Hourly</string>
     <string name="daily">Daily</string>
