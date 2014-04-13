@@ -4,6 +4,7 @@ bin
 gen
 ic_launcher-web.png
 jp.gr.java_conf.neko_daisuki.simplemediascanner
+key.properties
 local.properties
 res/drawable-hdpi/ic_launcher.png
 res/drawable-ldpi/ic_launcher.png
