@@ -27,11 +27,20 @@
     </string>
 
     <!-- EditActivity -->
-    <string name="directory_label">Directory path</string>
+    <string name="directory_label">Directory</string>
+    <string name="select_label">Select&#8230;</string>
     <string name="add_schedule">Add a new schedule&#8230;</string>
     <string name="hourly">Hourly</string>
     <string name="daily">Daily</string>
     <string name="hour_minute_separator">:</string>
+
+    <!-- AboutActivity -->
+    <string name="version_title">Version</string>
+    <string name="authors_website_title">Author\'s website</string>
+    <string name="url">
+        http://neko-daisuki.ddo.jp/~SumiTomohiko/index.html
+    </string>
+    <string name="license_title">License</string>
 </resources>
 <!--
 vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4

@@ -4,35 +4,30 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.URLEncoder;
 
 import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.webkit.WebView;
+import android.widget.TextView;
 
 public class AboutActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        String fmt = readTemplate();
-        String html = String.format(fmt, getVersion());
-        WebView view = new WebView(this);
-        view.loadData(URLEncoder.encode(html).replaceAll("\\+", "%20"), "text/html", "UTF-8");
-        setContentView(view);
+        setContentView(R.layout.activity_about);
+        showVersion();
+        showLicense();
     }
 
-    private String readTemplate() {
+    private void showLicense() {
         StringBuilder buffer = new StringBuilder();
-        InputStream in;
+
         try {
-            in = getAssets().open("license.html");
+            InputStream in = getAssets().open("COPYING");
             try {
-                Reader reader = new InputStreamReader(in);
+                InputStreamReader reader = new InputStreamReader(in);
                 try {
                     BufferedReader br = new BufferedReader(reader);
                     try {
@@ -57,11 +52,12 @@ public class AboutActivity extends Activity {
         catch (IOException e) {
             e.printStackTrace();
         }
-        android.util.Log.d("x", buffer.toString());
-        return buffer.toString();
+
+        TextView view = (TextView)findViewById(R.id.license);
+        view.setText(buffer.toString());
     }
 
-    private String getVersion() {
+    private void showVersion() {
         PackageManager pm = getPackageManager();
         String name = getPackageName();
         int flags = PackageManager.GET_INSTRUMENTATION;
@@ -72,11 +68,10 @@ public class AboutActivity extends Activity {
         }
         catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
-            return "???";
+            return;
         }
 
-        return pi.versionName;
+        TextView view = (TextView)findViewById(R.id.version);
+        view.setText(pi.versionName);
     }
 }
-
-// vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4

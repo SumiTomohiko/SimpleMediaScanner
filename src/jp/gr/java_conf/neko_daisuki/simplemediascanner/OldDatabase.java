@@ -39,7 +39,7 @@ class OldDatabase {
 
     public static void importOldDatabase(Context context) {
         Database database = new Database();
-        database.initializeEmptyDatabase();
+        database.initializeDatabase();
 
         List<String> directories = queryDirectories(context);
         for (String path: directories) {

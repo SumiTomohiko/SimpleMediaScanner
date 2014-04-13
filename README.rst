@@ -2,21 +2,26 @@
 Simple Media Scanner
 ********************
 
-Why did I develop this?
-=======================
+This makes your media visible
+=============================
 
-Usual media players for Android see the content provider to know where media
-files are. The content provider is updated by Android, but the process for it
-crashes very often. As a result, I could not play new music. I must update it by
-myself. This is why I developed this.
+Sometimes the media scanner in Android does not work as expected. You might not
+see some files. This application can fix this problem.
 
-What does this application do?
-==============================
+This application can scan files under a given directory manually or
+periodically.
 
-This application registers media files to the content provider in traversing
-given directories.
+Permissions
+===========
 
-This application requires no permissions.
+This application requires some permissions.
+
+* You must allow this to write settings in your storage.
+* This application must know that your tablet has been booted to run periodical
+  tasks.
+
+This is an open source software
+===============================
 
 This is open source software under the MIT license. Source code is available at
 `the author's website <http://neko-daisuki.ddo.jp/~SumiTomohiko/index.html>`.

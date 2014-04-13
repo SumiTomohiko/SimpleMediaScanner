@@ -1,11 +1,13 @@
 package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Locale;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
@@ -17,7 +19,17 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class EditActivity extends FragmentActivity implements ScheduleFragment.OnScheduleGivenListener {
+public class EditActivity extends FragmentActivity implements DirectoryFragment.OnSelectedListener, ScheduleFragment.OnScheduleGivenListener {
+
+    private class SelectButtonOnClickListener implements View.OnClickListener {
+
+        @Override
+        public void onClick(View v) {
+            String path = mDirectoryEditText.getText().toString();
+            DialogFragment fragment = DirectoryFragment.newInstance(path);
+            fragment.show(getSupportFragmentManager(), "select a directory");
+        }
+    }
 
     private class Adapter extends BaseAdapter {
 
@@ -140,11 +152,14 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
             checkBox.setChecked(contains(ids, scheduleId));
 
             boolean isDaily = schedule.isDaily();
-            String hour = isDaily ? String.format(Locale.ROOT, "%02d", schedule.getHour())
-                                  : " *";
+            String hour = isDaily ? formatHour(schedule.getHour()) : " *";
             int minute = schedule.getMinute();
             TextView scheduleText = (TextView)view.findViewById(R.id.schedule_text);
             scheduleText.setText(String.format("%s:%02d", hour, minute));
+        }
+
+        private String formatHour(int hour) {
+            return String.format(Locale.ROOT, "%02d", hour);
         }
 
         private View makeView() {
@@ -198,17 +213,24 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
     }
 
     @Override
+    public void onSelected(DirectoryFragment fragment, String path) {
+        mDirectoryEditText.setText(path);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
         mDatabase = Util.readDatabase(this);
         int taskId = getIntent().getIntExtra(EXTRA_ID, -1);
-        mId = taskId != -1 ? taskId : mDatabase.addTask("");
+        mId = taskId != -1 ? taskId : addNewTask();
 
         mDirectoryEditText = (EditText)findViewById(R.id.directory_text);
         mDirectoryEditText.setText(mDatabase.getTask(mId).getPath());
 
+        View selectButton = findViewById(R.id.select_button);
+        selectButton.setOnClickListener(new SelectButtonOnClickListener());
         View addScheduleButton = findViewById(R.id.add_schedule_button);
         addScheduleButton.setOnClickListener(new AddScheduleButtonOnClickListener());
         View okButton = findViewById(R.id.ok_button);
@@ -221,5 +243,10 @@ public class EditActivity extends FragmentActivity implements ScheduleFragment.O
         AbsListView scheduleList = (AbsListView)findViewById(list_id);
         scheduleList.setAdapter(mAdapter);
         mAdapter.notifyDataSetChanged();
+    }
+
+    private int addNewTask() {
+        File directory = Environment.getExternalStorageDirectory();
+        return mDatabase.addTask(directory.getAbsolutePath());
     }
 }
