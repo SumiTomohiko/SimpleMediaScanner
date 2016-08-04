@@ -13,7 +13,7 @@
         <attribute name="size"/>
         <sequential>
             <svg2icon
-                dest="res/drawable-@{dpi}dpi/ic_launcher.png"
+                dest="app/src/main/res/drawable-@{dpi}dpi/ic_launcher.png"
                 size="@{size}"/>
         </sequential>
     </macrodef>
