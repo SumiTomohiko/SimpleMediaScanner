@@ -8,6 +8,9 @@
     <string name="negative">Cancel</string>
 
     <!-- MainActivity -->
+    <string name="menu_delete_duplicated_entries">
+        Delete duplicated entries
+    </string>
     <string name="menu_about">About&#8230;</string>
     <string name="run_button">Run</string>
     <string name="edit_button">Edit&#8230;</string>

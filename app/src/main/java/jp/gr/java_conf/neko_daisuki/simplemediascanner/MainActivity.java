@@ -2,16 +2,23 @@ package jp.gr.java_conf.neko_daisuki.simplemediascanner;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -255,8 +262,17 @@ public class MainActivity extends FragmentActivity {
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
-        Intent i = new Intent(this, AboutActivity.class);
-        startActivity(i);
+        switch (item.getItemId()) {
+        case R.id.menu_delete_duplicated_entries:
+            deleteDuplicatedEntries();
+            break;
+        case R.id.menu_about:
+            Intent i = new Intent(this, AboutActivity.class);
+            startActivity(i);
+            break;
+        default:
+            return false;
+        }
         return true;
     }
 
@@ -321,5 +337,54 @@ public class MainActivity extends FragmentActivity {
 
     private OnPositiveListener getPositiveListener() {
         return new ConfirmDialogOnPositiveListener();
+    }
+
+    private void deleteDuplicatedEntries() {
+        deleteDuplicatedEntries(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+        deleteDuplicatedEntries(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        deleteDuplicatedEntries(MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        deleteDuplicatedEntries(MediaStore.Files.getContentUri("external"));
+    }
+
+    private Collection<Long> findDuplication(ContentResolver cr, Uri uri) {
+        Collection<Long> duplicateds = new HashSet<Long>();
+
+        Cursor cursor = cr.query(uri,
+                                 new String[] { MediaStore.MediaColumns._ID,
+                                                MediaStore.MediaColumns.DATA },
+                                 null,
+                                 null,
+                                 String.format("%s, %s",
+                                               MediaStore.MediaColumns.DATA,
+                                               MediaStore.MediaColumns._ID));
+        int idColumn = cursor.getColumnIndex(MediaStore.MediaColumns._ID);
+        int dataColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+        String currentData = "";
+        while (cursor.moveToNext()) {
+            String data = cursor.getString(dataColumn);
+            if (currentData.equals(data)) {
+                long id = cursor.getLong(idColumn);
+                duplicateds.add(Long.valueOf(id));
+                Log.i(LOG_TAG,
+                      String.format("duplication found: uri=%s, id=%d, data=%s",
+                                    uri.toString(), id, data));
+            }
+            currentData = data;
+        }
+
+        return duplicateds;
+    }
+
+    private void deleteEntries(ContentResolver cr, Uri uri,
+                               Collection<Long> ids) {
+        String where = String.format("%s=?", MediaStore.MediaColumns._ID);
+        for (Long id: ids) {
+            cr.delete(uri, where, new String[] { id.toString() });
+        }
+    }
+
+    private void deleteDuplicatedEntries(Uri uri) {
+        ContentResolver cr = getContentResolver();
+        deleteEntries(cr, uri, findDuplication(cr, uri));
     }
 }

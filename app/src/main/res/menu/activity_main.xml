@@ -1,5 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item
+        android:id="@+id/menu_delete_duplicated_entries"
+        android:title="@string/menu_delete_duplicated_entries"/>
+    <item
         android:id="@+id/menu_about"
         android:orderInCategory="100"
         android:showAsAction="never"
