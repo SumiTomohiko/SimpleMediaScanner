@@ -371,6 +371,7 @@ public class MainActivity extends FragmentActivity {
             }
             currentData = data;
         }
+        cursor.close();
 
         return duplicateds;
     }
