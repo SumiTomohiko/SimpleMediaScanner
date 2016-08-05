@@ -235,7 +235,7 @@ public class MainActivity extends FragmentActivity {
 
     private class RunAllButtonOnClickListener implements View.OnClickListener {
 
-        public void onClick(View _) {
+        public void onClick(View unused) {
             Database.Task[] tasks = mDatabase.getTasks();
             int length = tasks.length;
             int[] ids = new int[length];

@@ -178,7 +178,7 @@ public class EditActivity extends FragmentActivity implements DirectoryFragment.
 
     private class OkayButtonOnClickListener implements View.OnClickListener {
 
-        public void onClick(View _) {
+        public void onClick(View unused) {
             mDatabase.editTask(mId, mDirectoryEditText.getText().toString());
             Context context = EditActivity.this;
             Util.writeDatabase(context, mDatabase);
@@ -189,7 +189,7 @@ public class EditActivity extends FragmentActivity implements DirectoryFragment.
 
     private class CancelButtonOnClickListener implements View.OnClickListener {
 
-        public void onClick(View _) {
+        public void onClick(View unused) {
             finish();
         }
     }
