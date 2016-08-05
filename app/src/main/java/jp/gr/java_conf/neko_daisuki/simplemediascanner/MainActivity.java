@@ -357,6 +357,9 @@ public class MainActivity extends FragmentActivity {
                                  String.format("%s, %s",
                                                MediaStore.MediaColumns.DATA,
                                                MediaStore.MediaColumns._ID));
+        if (cursor == null) {
+            return duplicateds;
+        }
         int idColumn = cursor.getColumnIndex(MediaStore.MediaColumns._ID);
         int dataColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
         String currentData = "";
