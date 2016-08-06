@@ -10,6 +10,7 @@
 .idea/runConfigurations.xml
 .idea/vcs.xml
 .idea/workspace.xml
+app/app-release.apk
 app/build
 app/src/main/res/drawable-hdpi/ic_launcher.png
 app/src/main/res/drawable-ldpi/ic_launcher.png
