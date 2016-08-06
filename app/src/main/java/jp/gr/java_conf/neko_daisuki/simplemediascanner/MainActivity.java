@@ -16,8 +16,13 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.provider.MediaStore.Audio;
+import android.provider.MediaStore.Files;
+import android.provider.MediaStore.Images;
+import android.provider.MediaStore.MediaColumns;
+import android.provider.MediaStore.Video;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -245,6 +250,70 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    private class DeletingDuplicationTask extends AsyncTask<Void, Void, Void> {
+
+        protected void onPostExecute(Void unused) {
+            showInfo("The deleting duplication task finished.");
+        }
+
+        protected Void doInBackground(Void... unused) {
+            deleteDuplicatedEntries();
+            return null;
+        }
+
+        private Collection<Long> findDuplication(ContentResolver cr, Uri uri) {
+            Collection<Long> duplicateds = new HashSet<Long>();
+
+            String[] columns = new String[] { MediaColumns._ID,
+                                              MediaColumns.DATA };
+            String order = String.format("%s, %s",
+                                         MediaColumns.DATA,
+                                         MediaColumns._ID);
+            Cursor cursor = cr.query(uri, columns, null, null, order);
+            if (cursor == null) {
+                return duplicateds;
+            }
+            int idColumn = cursor.getColumnIndex(MediaColumns._ID);
+            int dataColumn = cursor.getColumnIndex(MediaColumns.DATA);
+            String currentData = "";
+            while (cursor.moveToNext()) {
+                String data = cursor.getString(dataColumn);
+                if (currentData.equals(data)) {
+                    long id = cursor.getLong(idColumn);
+                    duplicateds.add(Long.valueOf(id));
+
+                    String fmt = "duplication found: uri=%s, id=%d, data=%s";
+                    String s = String.format(fmt, uri.toString(), id, data);
+                    Log.i(LOG_TAG, s);
+                }
+                currentData = data;
+            }
+            cursor.close();
+
+            return duplicateds;
+        }
+
+        private void deleteDuplicatedEntries() {
+            deleteDuplicatedEntries(Audio.Media.EXTERNAL_CONTENT_URI);
+            deleteDuplicatedEntries(Images.Media.EXTERNAL_CONTENT_URI);
+            deleteDuplicatedEntries(Video.Media.EXTERNAL_CONTENT_URI);
+            deleteDuplicatedEntries(Files.getContentUri("external"));
+        }
+
+        private void deleteEntries(ContentResolver cr, Uri uri,
+                                   Collection<Long> ids) {
+            String where = String.format("%s=?", MediaColumns._ID);
+            for (Long id: ids) {
+                cr.delete(uri, where, new String[] { id.toString() });
+            }
+        }
+
+        private void deleteDuplicatedEntries(Uri uri) {
+            ContentResolver cr = getContentResolver();
+            deleteEntries(cr, uri, findDuplication(cr, uri));
+        }
+    }
+
     private static final String LOG_TAG = "activity";
 
     // documents
@@ -263,7 +332,8 @@ public class MainActivity extends FragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.menu_delete_duplicated_entries:
-            deleteDuplicatedEntries();
+            new DeletingDuplicationTask().execute();
+            showInfo("The deleting duplication task started.");
             break;
         case R.id.menu_about:
             Intent i = new Intent(this, AboutActivity.class);
@@ -305,9 +375,19 @@ public class MainActivity extends FragmentActivity {
         mAdapter.notifyDataSetChanged();
     }
 
+    private void showToast(String msg) {
+        String s = String.format("Simple Media Scanner: %s", msg);
+        Toast.makeText(this, s, Toast.LENGTH_LONG).show();
+    }
+
+    private void showInfo(String msg) {
+        Log.i(LOG_TAG, msg);
+        showToast(msg);
+    }
+
     private void showError(String msg) {
         Log.e(LOG_TAG, msg);
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+        showToast(msg);
     }
 
     private boolean makeDirectory(File directory) {
@@ -336,58 +416,5 @@ public class MainActivity extends FragmentActivity {
 
     private OnPositiveListener getPositiveListener() {
         return new ConfirmDialogOnPositiveListener();
-    }
-
-    private void deleteDuplicatedEntries() {
-        deleteDuplicatedEntries(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-        deleteDuplicatedEntries(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        deleteDuplicatedEntries(MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
-        deleteDuplicatedEntries(MediaStore.Files.getContentUri("external"));
-    }
-
-    private Collection<Long> findDuplication(ContentResolver cr, Uri uri) {
-        Collection<Long> duplicateds = new HashSet<Long>();
-
-        Cursor cursor = cr.query(uri,
-                                 new String[] { MediaStore.MediaColumns._ID,
-                                                MediaStore.MediaColumns.DATA },
-                                 null,
-                                 null,
-                                 String.format("%s, %s",
-                                               MediaStore.MediaColumns.DATA,
-                                               MediaStore.MediaColumns._ID));
-        if (cursor == null) {
-            return duplicateds;
-        }
-        int idColumn = cursor.getColumnIndex(MediaStore.MediaColumns._ID);
-        int dataColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-        String currentData = "";
-        while (cursor.moveToNext()) {
-            String data = cursor.getString(dataColumn);
-            if (currentData.equals(data)) {
-                long id = cursor.getLong(idColumn);
-                duplicateds.add(Long.valueOf(id));
-                Log.i(LOG_TAG,
-                      String.format("duplication found: uri=%s, id=%d, data=%s",
-                                    uri.toString(), id, data));
-            }
-            currentData = data;
-        }
-        cursor.close();
-
-        return duplicateds;
-    }
-
-    private void deleteEntries(ContentResolver cr, Uri uri,
-                               Collection<Long> ids) {
-        String where = String.format("%s=?", MediaStore.MediaColumns._ID);
-        for (Long id: ids) {
-            cr.delete(uri, where, new String[] { id.toString() });
-        }
-    }
-
-    private void deleteDuplicatedEntries(Uri uri) {
-        ContentResolver cr = getContentResolver();
-        deleteEntries(cr, uri, findDuplication(cr, uri));
     }
 }
