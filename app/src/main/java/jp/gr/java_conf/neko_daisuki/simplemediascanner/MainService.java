@@ -5,11 +5,14 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
+import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 public class MainService extends IntentService {
 
@@ -69,9 +72,25 @@ public class MainService extends IntentService {
         }
     }
 
+    private class DisplayToast implements Runnable {
+
+        private String mMessage;
+
+        public DisplayToast(String message) {
+            mMessage = message;
+        }
+
+        public void run() {
+            Context context = MainService.this;
+            Toast.makeText(context, mMessage, Toast.LENGTH_LONG).show();
+        }
+    }
+
     public static final String EXTRA_IDS = "ids";
 
     private static final String LOG_TAG = "service";
+
+    private Handler mHandler = new Handler();
 
     public MainService() {
         super("service");
@@ -93,6 +112,7 @@ public class MainService extends IntentService {
                                                                        client);
         client.setConnection(connection);
         connection.connect();
+        showToast("The scanning task started.");
         try {
             synchronized (barrier) {
                 barrier.wait();
@@ -101,5 +121,11 @@ public class MainService extends IntentService {
         catch (InterruptedException e) {
             e.printStackTrace();
         }
+        showToast("The scanning task finished.");
+    }
+
+    private void showToast(String message) {
+        String s = String.format("Simple Media Scanner: %s", message);
+        mHandler.post(new DisplayToast(s));
     }
 }
