@@ -2,14 +2,38 @@
 Simple Media Scanner
 ********************
 
-This makes your media visible
-=============================
+Show missing files
+==================
 
-Sometimes the media scanner in Android does not work as expected. You might not
-see some files. This application can fix this problem.
+What is a content provider?
+---------------------------
 
-This application can scan files under a given directory manually or
-periodically.
+A content provider is a database which stores information about media files
+(audio files, videos and images).  Applications tell locations of files which
+were created by the applications to a content provider.  Other applications can
+know via the content provider where files to show are.  For example, a camera
+application inserts photos' location to a content provider.  When you open the
+Gallary application, that queries to the content provider about photos in your
+device.  The Gallary shows the photos taken by the camera application.
+
+What are problems?
+------------------
+
+In some cases, content providers store only partial files in your device.  When
+this is realized, you cannot view all media files.
+
+Furthermore, content providers may contain two or more duplicated information
+for same one file.  In this case, you will see some same entries for the file in
+viewer applications.
+
+Show missing files
+------------------
+
+Simple Media Scanner is my solution for above problems.  This application helps
+you in two ways.
+
+1. Scanning given directories to store content providers
+2. Deleting duplicated information in content providers
 
 Permissions
 ===========
