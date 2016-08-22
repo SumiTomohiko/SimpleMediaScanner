@@ -12,7 +12,7 @@
         Delete duplicated entries
     </string>
     <string name="menu_about">About&#8230;</string>
-    <string name="run_button">Run</string>
+    <string name="run_button">Scan</string>
     <string name="edit_button">Edit&#8230;</string>
     <string name="delete_button">Delete</string>
     <string name="add_button">Add a directory&#8230;</string>
