@@ -125,7 +125,8 @@ public class MainService extends IntentService {
     }
 
     private void showToast(String message) {
-        String s = String.format("Simple Media Scanner: %s", message);
+        String name = getResources().getString(R.string.app_name);
+        String s = String.format("%s: %s", name, message);
         mHandler.post(new DisplayToast(s));
     }
 }

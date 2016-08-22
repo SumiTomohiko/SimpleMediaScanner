@@ -376,7 +376,8 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void showToast(String msg) {
-        String s = String.format("Simple Media Scanner: %s", msg);
+        String name = getResources().getString(R.string.app_name);
+        String s = String.format("%s: %s", name, msg);
         Toast.makeText(this, s, Toast.LENGTH_LONG).show();
     }
 

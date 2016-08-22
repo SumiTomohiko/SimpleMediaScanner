@@ -2,8 +2,8 @@
 License Information
 *******************
 
-Simple Media Scanner
-====================
+Show missing media
+==================
 
 MIT License
 -----------

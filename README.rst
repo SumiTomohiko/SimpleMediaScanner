@@ -1,9 +1,9 @@
 
-Simple Media Scanner
-********************
+Show missing media
+******************
 
-Show missing files
-==================
+Description
+===========
 
 What is a content provider?
 ---------------------------
@@ -29,8 +29,8 @@ viewer applications.
 Show missing files
 ------------------
 
-Simple Media Scanner is my solution for the above problems.  This application
-helps you in two ways.
+This application is my solution for the above problems.  This application helps
+you in two ways.
 
 1. Scanning given directories to store file's information in content providers
 2. Deleting duplicated information in content providers
