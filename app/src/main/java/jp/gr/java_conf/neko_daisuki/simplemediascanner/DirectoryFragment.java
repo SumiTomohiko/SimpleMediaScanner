@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -162,7 +163,10 @@ public class DirectoryFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setPath(getArguments().getString(KEY_INITIAL_DIRECTORY));
+
+        String path = getArguments().getString(KEY_INITIAL_DIRECTORY);
+        setPath(new File(path).isDirectory() ? path
+                                             : Environment.getExternalStorageDirectory().getAbsolutePath());
     }
 
     @Override
